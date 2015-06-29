@@ -8,6 +8,7 @@ import ClusterUtils.BasicUtils;
 import ClusterUtils.IClusterCalculable;
 import ClusterUtils.KMeansCluster;
 import Utils.FileUtils;
+import Word2VecUtils.vec.Learn;
 import Word2VecUtils.vec.Word2VEC;
 import Word2VecUtils.vec.domain.WordEntry;
 import org.ansj.domain.Term;
@@ -17,6 +18,7 @@ import org.ansj.splitWord.analysis.ToAnalysis;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -25,28 +27,36 @@ import java.util.Set;
 public class demo {
 
     public static void main(String[] args) throws IOException {
-        final File sportCorpusFile = new File("D:\\CS\\Java\\NLP\\OpinionRankProject\\data\\word2vecData\\word2vec_resultSanguo.txt");
-
-        File dirfile = new File("D:\\CS\\NLPtrainset\\wikidata\\jianti");
+//        final File sportCorpusFile = new File("D:\\CS\\Java\\NLP\\OpinionRankProject\\data\\word2vecData\\word2vec_resultSanguo.txt");
+        File projFile = new File("");
+        System.out.println(projFile.getAbsolutePath());
+        final String proj_path = projFile.getAbsolutePath();
+//        File dirfile = new File(proj_path + "\\data\\jianti");
+        File dirfile = new File(args[0]);
         File[] files = dirfile.listFiles();
 //
+//        final File fout = new File(proj_path + "\\data\\wikidata\\wiki_result.txt");
+        final File fout = new File(args[1]);
 //        构建语料
-        try (FileOutputStream fos = new FileOutputStream(sportCorpusFile)) {
+        try (FileOutputStream fos = new FileOutputStream(fout)) {
             int i = 0;
-            for (File classfile : files) {
-                for (File file : classfile.listFiles()) {
-                    System.out.println(i++);
-                    if (file.canRead() && file.getName().endsWith(".txt")) {
+            for (File file : files) {
+//                for (File file : classfile.listFiles()) {
+                Date date = new Date(System.currentTimeMillis());
+                System.out.println(i+++"time:"+date);
+                if (file.canRead() && file.getName().endsWith(".txt")) {
 //                    parserFile(fos, file);
-                        String str = FileUtils.File2str(file.getPath(), "utf-8");
-                        List<Term> terms = NlpAnalysis.parse(str);
-                        StringBuilder sb = new StringBuilder();
-                        for (Term term : terms) {
+                    String str = FileUtils.File2str(file.getPath(), "utf-8");
+                    List<Term> terms = NlpAnalysis.parse(str);
+                    StringBuilder sb = new StringBuilder();
+                    for (Term term : terms) {
+                        if (!term.getName().equals(" ")) {
                             sb.append(term.getName() + " ");
                         }
-                        fos.write(sb.toString().getBytes("gbk"));
                     }
+                    fos.write(sb.toString().getBytes("utf-8"));
                 }
+//                }
             }
         }
 //
@@ -73,22 +83,25 @@ public class demo {
 ////
 ////        //进行分词训练
 ////
-//        Learn lean = new Learn() ;
-//
-//        lean.learnFile(sportCorpusFile) ;
-//
-//        lean.saveModel(new File("D:\\CS\\Git\\NLP\\AppChinaProject\\data\\word2vecData\\vectorSanguo.mod")) ;
+        System.out.println("start training");
+        Learn lean = new Learn();
 
+        lean.learnFile(fout);
+
+//        lean.saveModel(new File(proj_path + "\\data\\word2vecData\\cnwiki.mod"));
+        lean.saveModel(new File(args[2]));
+        System.out.println("model saved at " + args[2]);
 
         //加载测试
 
         Word2VEC w2v = new Word2VEC();
-        w2v.loadJavaModel("D:\\CS\\Git\\NLP\\AppChinaProject\\data\\word2vecData\\vectorSanguo.mod");
+//        w2v.loadJavaModel(proj_path + "\\data\\word2vecData\\cnwiki.mod");
+        w2v.loadJavaModel(args[2]);
 
 //        float[] vector = w2v.getWordVector("CBA");
 //        System.out.println(w2v.analogy("球队","投篮","CBA"));
 //        System.out.println(Arrays.toString(vector));
-        String qury = "喜欢";
+//        String qury = "喜欢";
 //        FileOutputStream fos = new FileOutputStream(
 //                new File("D:\\CS\\Git\\NLP\\AppChinaProject\\data\\word2vecData\\" + qury + ".csv"));
 ////        fos.write("\\xEF\\xBB\\xBF".getBytes());
@@ -101,7 +114,7 @@ public class demo {
 //        String sent2 = "他比较讨厌吃西瓜";
 //        double cosDist = BasicUtils.calCosDist(sent2vec(w2v, sent1), sent2vec(w2v, sent2));
 //        System.out.println(cosDist);
-        String quryword= "喜欢";
+        String quryword = "广西";
         Set<WordEntry> wordEntries = w2v.distance(quryword);
 //        System.out.println(quryword+"===============");
 //        for (WordEntry we : wordEntries) {
@@ -110,7 +123,7 @@ public class demo {
 //
 //        quryword= "讨厌";
         wordEntries = w2v.distance(quryword);
-        System.out.println(quryword+"==============");
+        System.out.println(quryword + "==============");
         for (WordEntry we : wordEntries) {
             System.out.println(we.name + "\t" + we.score);
         }
