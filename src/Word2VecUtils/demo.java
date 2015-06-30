@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 
+
 public class demo {
 
     public static void main(String[] args) throws IOException {
@@ -32,33 +33,33 @@ public class demo {
         System.out.println(projFile.getAbsolutePath());
         final String proj_path = projFile.getAbsolutePath();
 //        File dirfile = new File(proj_path + "\\data\\jianti");
-        File dirfile = new File(args[0]);
-        File[] files = dirfile.listFiles();
-//
-//        final File fout = new File(proj_path + "\\data\\wikidata\\wiki_result.txt");
-        final File fout = new File(args[1]);
-//        构建语料
-        try (FileOutputStream fos = new FileOutputStream(fout)) {
-            int i = 0;
-            for (File file : files) {
-//                for (File file : classfile.listFiles()) {
-                Date date = new Date(System.currentTimeMillis());
-                System.out.println(i+++"time:"+date);
-                if (file.canRead() && file.getName().endsWith(".txt")) {
-//                    parserFile(fos, file);
-                    String str = FileUtils.File2str(file.getPath(), "utf-8");
-                    List<Term> terms = NlpAnalysis.parse(str);
-                    StringBuilder sb = new StringBuilder();
-                    for (Term term : terms) {
-                        if (!term.getName().equals(" ")) {
-                            sb.append(term.getName() + " ");
-                        }
-                    }
-                    fos.write(sb.toString().getBytes("utf-8"));
-                }
+//        File dirfile = new File(args[0]);
+//        File[] files = dirfile.listFiles();
+////
+////        final File fout = new File(proj_path + "\\data\\wikidata\\wiki_result.txt");
+//        final File fout = new File(args[1]);
+////        构建语料
+//        try (FileOutputStream fos = new FileOutputStream(fout)) {
+//            int i = 0;
+//            for (File file : files) {
+////                for (File file : classfile.listFiles()) {
+//                Date date = new Date(System.currentTimeMillis());
+//                System.out.println(i+++"time:"+date);
+//                if (file.canRead() && file.getName().endsWith(".txt")) {
+////                    parserFile(fos, file);
+//                    String str = FileUtils.File2str(file.getPath(), "utf-8");
+//                    List<Term> terms = NlpAnalysis.parse(str);
+//                    StringBuilder sb = new StringBuilder();
+//                    for (Term term : terms) {
+//                        if (!term.getName().equals(" ")) {
+//                            sb.append(term.getName() + " ");
+//                        }
+//                    }
+//                    fos.write(sb.toString().getBytes("utf-8"));
 //                }
-            }
-        }
+////                }
+//            }
+//        }
 //
 //        try (FileOutputStream fos = new FileOutputStream(sportCorpusFile)) {
 //            int i = 0;
@@ -83,20 +84,21 @@ public class demo {
 ////
 ////        //进行分词训练
 ////
-        System.out.println("start training");
-        Learn lean = new Learn();
+//        System.out.println("start training");
+//        Learn lean = new Learn();
 
-        lean.learnFile(fout);
-
-//        lean.saveModel(new File(proj_path + "\\data\\word2vecData\\cnwiki.mod"));
-        lean.saveModel(new File(args[2]));
-        System.out.println("model saved at " + args[2]);
+//        lean.learnFile(fout);
+//
+////        lean.saveModel(new File(proj_path + "\\data\\word2vecData\\cnwiki.mod"));
+//        lean.saveModel(new File(args[2]));
+//        System.out.println("model saved at " + args[2]);
 
         //加载测试
 
         Word2VEC w2v = new Word2VEC();
-//        w2v.loadJavaModel(proj_path + "\\data\\word2vecData\\cnwiki.mod");
-        w2v.loadJavaModel(args[2]);
+//        w2v.loadJavaModel(proj_path + "\\data\\wikidata\\wikimodel.mod");
+        w2v.loadJavaModel("e:\\wikimodel_reduced.mod");
+//        w2v.loadJavaModel(args[2]);
 
 //        float[] vector = w2v.getWordVector("CBA");
 //        System.out.println(w2v.analogy("球队","投篮","CBA"));
@@ -110,18 +112,26 @@ public class demo {
 //            System.out.println(we.name + "\t" + we.score);
 //            fos.write((we.name + "," + we.score + "\n").getBytes());
 //        }
-//        String sent1 = "我喜欢吃西瓜";
-//        String sent2 = "他比较讨厌吃西瓜";
-//        double cosDist = BasicUtils.calCosDist(sent2vec(w2v, sent1), sent2vec(w2v, sent2));
+        String sent1 = "我喜欢吃西瓜";
+        String sent2 = "我讨厌吃西瓜";
+//        double cosDist = BasicUtils.calCosDist(VecUtils.sent2vec(w2v, sent1), VecUtils.sent2vec(w2v, sent2));
 //        System.out.println(cosDist);
-        String quryword = "广西";
+        String quryword = "足球";
         Set<WordEntry> wordEntries = w2v.distance(quryword);
+//        w2v.getWordVector()
 //        System.out.println(quryword+"===============");
 //        for (WordEntry we : wordEntries) {
 //            System.out.println(we.name + "\t" + we.score);
 //        }
 //
 //        quryword= "讨厌";
+        wordEntries = w2v.distance(quryword);
+        System.out.println(quryword + "==============");
+        for (WordEntry we : wordEntries) {
+            System.out.println(we.name + "\t" + we.score);
+        }
+
+        quryword= "学校";
         wordEntries = w2v.distance(quryword);
         System.out.println(quryword + "==============");
         for (WordEntry we : wordEntries) {
@@ -154,20 +164,7 @@ public class demo {
     }
 
 
-    public static float[] sent2vec(Word2VEC w2v, String sent) {
-        List<Term> parse = NlpAnalysis.parse(sent);
-        float[] result = new float[w2v.getWordVector("苏宁").length];
-        for (Term t : parse) {
-            float[] wordVector = w2v.getWordVector(t.getName());
-            if (wordVector != null) {
-                for (int i = 0; i < wordVector.length; i++) {
-                    float val = wordVector[i];
-                    result[i] += val;
-                }
-            }
-        }
-        return result;
-    }
+
 
 
     private static void parseStr(FileOutputStream fos, String title) throws IOException {
