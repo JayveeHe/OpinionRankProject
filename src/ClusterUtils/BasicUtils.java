@@ -27,8 +27,15 @@ public class BasicUtils {
             fenmu1 += vec1[i] * vec1[i];
             fenmu2 += vec2[i] * vec2[i];
         }
+        if( fenmu1==0||fenmu2==0){
+            System.out.println(fenzi);
+            return 0.0;
+        }
         double cosDist = fenzi / (Math.sqrt(fenmu1) * Math.sqrt(fenmu2));
-        return cosDist > Double.MAX_VALUE ? 1 : cosDist;
+        if (cosDist==Double.NaN){
+            System.out.println(fenzi);
+        }
+        return cosDist >= Double.MAX_VALUE ? 1 : cosDist;
     }
 
     /**
