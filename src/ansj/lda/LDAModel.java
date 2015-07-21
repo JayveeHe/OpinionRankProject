@@ -260,7 +260,7 @@ public abstract class LDAModel {
      *
      * @author ansj
      */
-    static class VecotrEntry implements Comparable<VecotrEntry> {
+    static class VecotrEntry implements Comparable< VecotrEntry> {
         int id;
         double score;
 
