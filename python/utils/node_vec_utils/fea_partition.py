@@ -5,13 +5,13 @@ __author__ = 'jayvee'
 
 
 def divide_fea_rates(interval_rate, fea_list, fea_key):
-    '''
-
+    """
+    对所选取的特征进行离散量化
     :param interval_rate:
     :param fea_list: 未经过排序的get_vec()后的特征list
     :param fea_key:
     :return:
-    '''
+    """
     rate_partition = [[] for i in xrange(int(math.floor(1 / interval_rate)) + 1)]
     if fea_key not in ['verb_rate', 'noun_rate', 'adj_rate']:
         return None
