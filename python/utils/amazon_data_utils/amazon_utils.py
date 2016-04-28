@@ -33,11 +33,14 @@ if __name__ == '__main__':
             "/Users/jayvee/github_project/shcolarship/OpinionRankProject/python/data/reviews_Apps_for_Android.json.gz"):
         # print l
         count += 1
-        if count > 1222323:
+        if count > 0:
             elem = json.loads(l)
             try:
                 t = elem['reviewTime'].split(',')
                 d = t[0].split(' ')
+                elem['up_vote'] = elem['helpful'][0]
+                elem['total_vote'] = elem['helpful'][1]
+                del (elem['helpful'])
                 elem['reviewTime'] = datetime.datetime(year=int(t[1]), month=int(d[0]), day=int(d[1]))
                 ilist.append(elem)
 
