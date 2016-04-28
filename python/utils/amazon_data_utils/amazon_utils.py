@@ -1,14 +1,13 @@
 # coding=utf-8
 import datetime
 import sys
-from utils.CommonUtils import PROJECT_PATH
-from utils.dao_utils.mongo_utils import get_db_inst
-
+import os
 __author__ = 'jayvee'
 import json
 import gzip
-sys.path.append(PROJECT_PATH)
-
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+from utils.dao_utils.mongo_utils import get_db_inst
+from utils.CommonUtils import PROJECT_PATH
 def parse(path):
     g = gzip.open(path, 'r')
     for l in g:
@@ -32,7 +31,7 @@ if __name__ == '__main__':
     ilist = []
     count = 0
     for l in parse(
-            "/Users/jayvee/github_project/shcolarship/OpinionRankProject/python/data/reviews_Apps_for_Android.json.gz"):
+            "%s/data/reviews_Apps_for_Android.json.gz"%PROJECT_PATH):
         # print l
         count += 1
         if count > 153488:
