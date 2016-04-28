@@ -30,19 +30,21 @@ class SentenceNodeManager(object):
         mean_verb_rate = 0
         mean_adj_rate = 0
         mean_noun_rate = 0
+        mean_sent_len = 0
         list_size = len(self.node_list)
         for sent in self.node_list:
             vec_value = sent.get_vec()
             mean_verb_rate += vec_value['verb_rate'] / list_size
             mean_adj_rate += vec_value['adj_rate'] / list_size
             mean_noun_rate += vec_value['noun_rate'] / list_size
+            mean_sent_len += vec_value['sent_len'] / list_size
         gkeywords = []
-        gkeywords = self.get_global_keywords(10)
+        gkeywords = self.get_global_keywords(100)
         # for gkey in self.get_global_keywords(10):
         #     gkeywords.append(gkey[0])
 
         return {'mean_verb_rate': mean_verb_rate, 'mean_adj_rate': mean_adj_rate,
-                'mean_noun_rate': mean_noun_rate, 'global_keywords': gkeywords}
+                'mean_noun_rate': mean_noun_rate, 'mean_sent_len': mean_sent_len, 'global_keywords': gkeywords}
 
     def normalize_all_sentnodes(self):
         global_values = self.get_global_values()

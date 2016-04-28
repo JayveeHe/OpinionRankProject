@@ -38,14 +38,17 @@ def get_keywords(sent, topk=None):
     :param topk:
     :return:
     """
-    seg_count = len(jieba.analyse.extract_tags(sent, withWeight=True, topK=len(sent)))
+    # seg_count = len(jieba.analyse.extract_tags(sent, withWeight=True, topK=len(sent)))
+
     if topk:
-        tags = jieba.analyse.extract_tags(sent, withWeight=True, topK=topk)
+        tags = jieba.analyse.textrank(sent, withWeight=True, topK=topk, allowPOS=['ns', 'n', 'vn', 'v', 'nr'])
+        # tags = jieba.analyse.extract_tags(sent, withWeight=True, topK=topk, allowPOS=['ns', 'n', 'vn', 'v', 'nr'])
     else:
-        tags = jieba.analyse.extract_tags(sent, withWeight=True, topK=len(sent))
+        tags = jieba.analyse.textrank(sent, withWeight=True, topK=10, allowPOS=['ns', 'n', 'vn', 'v', 'nr'])
+        # tags = jieba.analyse.extract_tags(sent, withWeight=True, topK=10, allowPOS=['ns', 'n', 'vn', 'v', 'nr'])
     result = []
     for w, freq in tags:
-        result.append((w, freq * seg_count))
+        result.append((w, freq * len(tags)))
     return result
 
 
@@ -69,6 +72,6 @@ if __name__ == '__main__':
     for i in jieba.cut('北京电影学院体育场'):
         print i
         # print seg_sentence(u'好用，非常实惠的商品')
-        # for key in get_keywords(u'好用，非常实惠的商品'):
-        #     print key[0], key[1]
-        # print get_pos(u'好用，非常实惠的商品')
+        for key in get_keywords(u'好用，非常实惠的商品'):
+            print key[0], key[1]
+            # print get_pos(u'好用，非常实惠的商品')

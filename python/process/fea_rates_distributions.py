@@ -1,8 +1,11 @@
 # coding=utf-8
-from process.main_process import get_limit_taobao_comments
-from utils.node_vec_utils.fea_partition import divide_fea_rates
-from utils.node_vec_utils.vec_building import SentenceNode
+import math
+
 import matplotlib.pyplot as plt
+
+from process.main_process import get_limit_taobao_comments
+from utils.belief_propagation_utils.node_vec_utils.fea_partition import divide_fea_rates
+from utils.node_vec_utils.vec_building_utils import SentenceNode
 
 __author__ = 'jayvee'
 
@@ -28,6 +31,7 @@ if __name__ == '__main__':
     #                            sim_rate=0.5,
     #                            alpha=0.3)
     sent_node_fea_list = []
+    sent_node_vec_list = []
     verb_list = []
     noun_list = []
     adj_list = []
@@ -36,9 +40,51 @@ if __name__ == '__main__':
         comment = comm['comment']
         sent_node = SentenceNode(comment, None)
         sent_node_fea_list.append(sent_node.get_vec())
+        sent_node_vec_list.append([sent_node.verb_rate, sent_node.noun_rate, sent_node.adj_rate])
         verb_list.append(sent_node.verb_rate)
         noun_list.append(sent_node.noun_rate)
         adj_list.append(sent_node.adj_rate)
+
+
+    # 动词的log比例个数分布
+    interval_rate = 0.001
+    fea_key = 'verb_rate'
+    partition = divide_fea_rates(interval_rate, sent_node_fea_list, fea_key)
+    partition.sort(lambda x, y: -cmp(len(x), len(y)))
+    xlist = []
+    ylist = []
+    for p in partition:
+        if len(p) > 0:
+            xlist.append(len(xlist))
+            ylist.append(math.log10(len(p)))
+    plt.bar(xlist,ylist)
+    plt.grid(True)
+    plt.title('%s sorted log partition, with interval=%s, sent count=%s' % (fea_key, interval_rate, len(sent_node_fea_list)))
+    plt.xlabel('divide index')
+    plt.ylabel('sentence count(Log)')
+    # plt.xticks(range(len(partition)),
+    #            ['%s~%s' % (i * interval_rate, (i + 1) * interval_rate) for i in xrange(len(partition))])
+    plt.show()
+
+    # 动词的比例个数分布
+    interval_rate = 0.001
+    fea_key = 'verb_rate'
+    partition = divide_fea_rates(interval_rate, sent_node_fea_list, fea_key)
+    partition.sort(lambda x, y: -cmp(len(x), len(y)))
+    xlist = []
+    ylist = []
+    for p in partition:
+        if len(p) > 0:
+            xlist.append(len(xlist))
+            ylist.append(len(p))
+    plt.bar(xlist,ylist)
+    plt.grid(True)
+    plt.title('%s sorted partition, with interval=%s, sent count=%s' % (fea_key, interval_rate, len(sent_node_fea_list)))
+    plt.xlabel('divide index')
+    plt.ylabel('sentence count')
+    # plt.xticks(range(len(partition)),
+    #            ['%s~%s' % (i * interval_rate, (i + 1) * interval_rate) for i in xrange(len(partition))])
+    plt.show()
 
     # 动词的比例个数分布
     interval_rate = 0.001

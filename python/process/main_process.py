@@ -2,10 +2,11 @@
 import hashlib
 import random
 import sys
-import math
+
 import arrow
 from dateutil import tz
-from utils.node_vec_utils.vec_building import SentenceNode
+
+from utils.node_vec_utils.vec_building_utils import SentenceNode
 from utils.sentence_utils import remove_illegal_characters
 
 reload(sys)
@@ -61,11 +62,17 @@ def get_limit_taobao_comments(limit, json_path, is_datetime=True):
                 refined_comment[u'datetime'] = arrow.get(refined_comment['date'], u'YYYY年MM月DD日 HH:mm',
                                                          tzinfo=tz.tzlocal())
                 result.append(
-                    {'comment': com_content, 'datetime': refined_comment['datetime']})
+                    {'comment': com_content, 'datetime': refined_comment['datetime'],
+                     # 'isBelievable': random.choice([True, False])
+                     'isBelievable': True if random.random() > 0.7 else False
+
+                     })
             else:
                 result.append(
                     {'comment': com_content, 'datetime': refined_comment['date'],
-                     'isBelievable': random.choice([True, False])})
+                     # 'isBelievable': random.choice([True, False])
+                     'isBelievable': True if random.random() > 0.7 else False
+                     })
             temp_dict[comment_md5] = 1
             if not refined_comment['content']:
                 print refined_str

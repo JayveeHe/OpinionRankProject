@@ -109,7 +109,7 @@ def cal_sim_lda(sent_a, sent_b):
         return fenzi / fenmu
 
 
-def cal_sim_combine(sent_a, sent_b, alpha=0.5):
+def cal_sim_combine(sent_a, sent_b, alpha=0.2):
     """
     计算综合的相似度
     :param sent_a:
@@ -122,9 +122,9 @@ def cal_sim_combine(sent_a, sent_b, alpha=0.5):
 
 
 if __name__ == '__main__':
-    senta = u'火箭队是最好的NBA球队'
-    sentb = u'西瓜是最好吃的食物'
+    senta = u'上海到北京的机票'
+    sentb = u'这个东西不错'
     print cal_sim_pos(senta, sentb)
     print cal_sim_tfidf(senta, sentb)
-    print cal_sim_lda(senta, sentb)
-    # print cal_sim_combine(senta, sentb)
+    # print cal_sim_lda(senta, sentb)
+    print cal_sim_combine(senta, sentb)

@@ -32,8 +32,8 @@ def save_csv(jd_result, fout_path=None):
 
 
 if __name__ == '__main__':
-    ITEM_ID = 1441414
-    MAXPAGE = 30
+    ITEM_ID = 411082
+    MAXPAGE = 20
     # RES = get_jd_rate(ITEM_ID,MAXPAGE)
     jd_res = jd_parser(ITEM_ID, MAXPAGE)
     open('%s-%s-parser_result.json' % (arrow.utcnow().timestamp, jd_res['title'][:10]), 'w').write(

@@ -23,6 +23,8 @@ class SentenceNode(object):
         self.g_adj_rate = 0.0
         self.g_verb_rate = 0.0
         self.g_tfidf_rate = []
+        self.sent_len = len(sent)
+        self.g_sent_len = 0.0
         self.post_datetime = post_datetime
         self.extra = extra
 
@@ -109,6 +111,9 @@ class SentenceNode(object):
         mean_adj_rate = group_paras['mean_adj_rate']
         # self.g_adj_rate = self.adj_rate / mean_adj_rate
         self.g_adj_rate = cal_sigmoid(self.adj_rate, mean_adj_rate)
+        # sent len
+        mean_sent_len = group_paras['mean_sent_len']
+        self.g_sent_len = cal_sigmoid(self.sent_len, mean_sent_len)
         # tfidf vec
         global_keywords = group_paras['global_keywords']
         self.g_tfidf_rate = [0.0] * len(global_keywords)
@@ -129,7 +134,7 @@ class SentenceNode(object):
         """
         return {'verb_rate': self.verb_rate, 'noun_rate': self.noun_rate, 'adj_rate': self.adj_rate,
                 'g_verb_rate': self.g_verb_rate, 'g_noun_rate': self.g_noun_rate, 'g_adj_rate': self.g_adj_rate,
-                'g_tfidf_rate': self.g_tfidf_rate}
+                'g_tfidf_rate': self.g_tfidf_rate, 'sent_len': self.sent_len, 'g_sent_len': self.g_sent_len}
 
     def feature2token(self, interval=0.001):
         """
@@ -146,6 +151,8 @@ class SentenceNode(object):
             #     tokens.append((i * RANGE + int(rate / interval), 1.0))
             #     i += 1
             rate = vec.get(key)
+            if key == 'sent_len':
+                continue
             if isinstance(rate, list):
                 for c in rate:
                     tokens.append((i * RANGE + int(c / interval), 1.0))
