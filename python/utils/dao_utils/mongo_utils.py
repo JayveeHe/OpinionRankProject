@@ -16,3 +16,10 @@ def get_db_inst(db_name, collection_name):
         return db_inst
     except Exception, e:
         print 'error, details=%s' % (e)
+
+
+def create_index(db_name, collection_name, index_conf):
+    db_inst = get_db_inst(db_name,collection_name)
+    print db_inst.create_indexes(index_conf)
+
+

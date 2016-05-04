@@ -9,11 +9,20 @@ __author__ = 'jayvee'
 
 
 class SentenceNode(object):
-    def __init__(self, sent, post_datetime=None, extra=None):
+    def __init__(self, sent, post_datetime=None, extra=None, get_pos_func=get_pos, get_keywords_func=get_keywords):
+        """
+
+        :param sent:
+        :param post_datetime:
+        :param extra:
+        :param get_pos_func: 可自定义词性提取
+        :param get_keywords_func: 可自定义tfidf提取
+        :return:
+        """
         self.sent = sent.replace('\n', '')
-        self.pos_result = get_pos(self.sent)
+        self.pos_result = get_pos_func(self.sent)
         self.tfidf_result = {}
-        for item in get_keywords(self.sent):
+        for item in get_keywords_func(self.sent):
             self.tfidf_result[item[0]] = item[1]
 
         self.noun_rate = 0.0
@@ -40,7 +49,7 @@ class SentenceNode(object):
             if len(self.pos_result) == 0:
                 return 0.0
             for pos in self.pos_result:
-                if pos[1] in ['v', 'vn', 'vd', 'vi']:
+                if pos[1] in ['v', 'vn', 'vd', 'vi','VB','VBD','VBG','VBN','VBP','VBZ']:
                     verb_count += 1.0
             return verb_count / len(self.pos_result)
 
@@ -53,7 +62,7 @@ class SentenceNode(object):
             if len(self.pos_result) == 0:
                 return 0.0
             for pos in self.pos_result:
-                if pos[1] in ['n', 'ns', 'nz', 'nr']:
+                if pos[1] in ['n', 'ns', 'nz', 'nr', 'NN', 'NNS', 'NNP', 'NNPS']:
                     tmp_count += 1.0
             return tmp_count / len(self.pos_result)
 
@@ -66,7 +75,7 @@ class SentenceNode(object):
             if len(self.pos_result) == 0:
                 return 0.0
             for pos in self.pos_result:
-                if pos[1] in ['a', 'ad', 'an', 'ag', 'al']:
+                if pos[1] in ['a', 'ad', 'an', 'ag', 'al','JJ','JJR','JJS']:
                     tmp_count += 1.0
             return tmp_count / len(self.pos_result)
 

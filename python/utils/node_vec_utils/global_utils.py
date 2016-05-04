@@ -16,13 +16,13 @@ class SentenceNodeManager(object):
     def add_node(self, sent_node):
         self.node_list.append(sent_node)
 
-    def get_global_keywords(self, topk):
+    def get_global_keywords(self, topk, keywords_func=None):
         tmp_text = ''
         for node in self.node_list:
             tmp_text += node.sent + '\n'
-        return get_keywords(tmp_text, topk)
+        return get_keywords(tmp_text, topk, keywords_func)
 
-    def get_global_values(self):
+    def get_global_values(self, tfidf_func=None):
         """
         获取句子群的群属性值
         :return:
@@ -39,15 +39,15 @@ class SentenceNodeManager(object):
             mean_noun_rate += vec_value['noun_rate'] / list_size
             mean_sent_len += vec_value['sent_len'] / list_size
         gkeywords = []
-        gkeywords = self.get_global_keywords(100)
+        gkeywords = self.get_global_keywords(topk=100, keywords_func=tfidf_func)
         # for gkey in self.get_global_keywords(10):
         #     gkeywords.append(gkey[0])
 
         return {'mean_verb_rate': mean_verb_rate, 'mean_adj_rate': mean_adj_rate,
                 'mean_noun_rate': mean_noun_rate, 'mean_sent_len': mean_sent_len, 'global_keywords': gkeywords}
 
-    def normalize_all_sentnodes(self):
-        global_values = self.get_global_values()
+    def normalize_all_sentnodes(self, tfidf_func=None):
+        global_values = self.get_global_values(tfidf_func=tfidf_func)
         for node in self.node_list:
             node.norm_vec(global_values)
 

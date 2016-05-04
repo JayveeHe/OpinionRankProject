@@ -3,3 +3,6 @@ jieba
 gensim
 textrank4zh
 sklearn
+seaborn
+matplotlib
+nltk

@@ -2,6 +2,7 @@
 import jieba
 import jieba.analyse
 import jieba.posseg as pseg
+from utils.nltk_utils.nltk_tools import cal_tfidf
 
 __author__ = 'jayvee'
 
@@ -31,7 +32,7 @@ def get_pos(sent):
     return result
 
 
-def get_keywords(sent, topk=None):
+def get_keywords(sent, topk=None, keywords_func=None):
     """
     获取句子的关键词及相应的评分
     :param sent:
@@ -39,13 +40,19 @@ def get_keywords(sent, topk=None):
     :return:
     """
     # seg_count = len(jieba.analyse.extract_tags(sent, withWeight=True, topK=len(sent)))
-
-    if topk:
-        tags = jieba.analyse.textrank(sent, withWeight=True, topK=topk, allowPOS=['ns', 'n', 'vn', 'v', 'nr'])
-        # tags = jieba.analyse.extract_tags(sent, withWeight=True, topK=topk, allowPOS=['ns', 'n', 'vn', 'v', 'nr'])
+    if not keywords_func:
+        if topk:
+            tags = jieba.analyse.textrank(sent, withWeight=True, topK=topk, allowPOS=['ns', 'n', 'vn', 'v', 'nr'])
+            # tags = jieba.analyse.extract_tags(sent, withWeight=True, topK=topk, allowPOS=['ns', 'n', 'vn', 'v', 'nr'])
+        else:
+            tags = jieba.analyse.textrank(sent, withWeight=True, topK=10, allowPOS=['ns', 'n', 'vn', 'v', 'nr'])
+            # tags = jieba.analyse.extract_tags(sent, withWeight=True, topK=10, allowPOS=['ns', 'n', 'vn', 'v', 'nr'])
     else:
-        tags = jieba.analyse.textrank(sent, withWeight=True, topK=10, allowPOS=['ns', 'n', 'vn', 'v', 'nr'])
-        # tags = jieba.analyse.extract_tags(sent, withWeight=True, topK=10, allowPOS=['ns', 'n', 'vn', 'v', 'nr'])
+        if topk:
+            tags = cal_tfidf(sent)[:topk]
+            # tags = jieba.analyse.extract_tags(sent, withWeight=True, topK=topk, allowPOS=['ns', 'n', 'vn', 'v', 'nr'])
+        else:
+            tags = cal_tfidf(sent)[:10]
     result = []
     for w, freq in tags:
         result.append((w, freq * len(tags)))

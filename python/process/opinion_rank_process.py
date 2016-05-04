@@ -4,6 +4,8 @@ import pickle
 import re
 
 import arrow
+from gensim import models
+from process.amazon_process import amazon_test
 
 from utils.node_vec_utils.global_utils import SentenceNodeManager
 from utils.node_vec_utils.vec_building_utils import SentenceNode
@@ -103,6 +105,8 @@ def feature_lda(save_label):
     # _, train_sent_list, train_label_list, train_token_list, train_node_list = preprocess(
     #     '/Users/jayvee/github_project/shcolarship/OpinionRankProject/python/crawler/data/csv/train_set.csv')
 
+    _, train_sent_list, train_label_list, train_token_list, train_node_list = amazon_test()
+
     test_path = '/Users/jayvee/github_project/shcolarship/OpinionRankProject/python/crawler/data/csv/1461611102-飘柔护发素高纯度焗油.csv'
     _, test_sent_list, _, test_token_list, test_node_list = preprocess(
         test_path)
@@ -115,23 +119,23 @@ def feature_lda(save_label):
 
     # lda
     # train lda model
-    # print 'start lda training'
-    # tfidf = models.TfidfModel(train_token_list)
-    # corpus_tfidf = tfidf[train_token_list]
-    # lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=30,
-    #                             passes=10)
-    # # print lda_model.print_topics(100)
-    # mfile = open('lda_model_100t.mod', 'w')
-    # pickle.dump(lda_model, mfile)
+    print 'start lda training'
+    tfidf = models.TfidfModel(train_token_list)
+    corpus_tfidf = tfidf[train_token_list]
+    lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=30,
+                                passes=10)
+    # print lda_model.print_topics(100)
+    mfile = open('lda_model_100t.mod', 'w')
+    pickle.dump(lda_model, mfile)
     #
     # # train nb
     # nbclf = train_nb(get_lda_vec(lda_model, train_token_list), train_label_list)
     # mfile = open('nb_model.mod', 'w')
     # pickle.dump(nbclf, mfile)
     #
-    # rfclf = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
-    # mfile = open('rf_model.mod', 'w')
-    # pickle.dump(rfclf, mfile)
+    rfclf = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
+    mfile = open('rf_model.mod', 'w')
+    pickle.dump(rfclf, mfile)
 
     mfile = open('lda_model_100t.mod', 'r')
     lda_model = pickle.load(mfile)
