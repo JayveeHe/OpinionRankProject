@@ -171,11 +171,11 @@ def cal_trainset_count_errors(start, end):
 
 
 def amazon_main():
-    mfile = open('lda_model_100t.mod', 'r')
+    mfile = open('%s/process/data/lda_model_100t.mod' % PROJECT_PATH, 'r')
     lda_model = pickle.load(mfile)
     # mfile = open('nb_model.mod', 'r')
     # nbclf = pickle.load(mfile)
-    mfile = open('rf_model.mod', 'r')
+    mfile = open('%s/process/data/rf_model.mod' % PROJECT_PATH, 'r')
     rfclf = pickle.load(mfile)
     # print rfclf.feature_importances_
     _, test_sent_list, _, test_token_list, test_node_list = amazon_test(60, 80)
