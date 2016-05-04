@@ -1,5 +1,6 @@
 from collections import defaultdict
-import pickle
+# import pickle
+import cPickle
 from nltk import pos_tag, stem
 from nltk.tokenize import word_tokenize
 from utils.CommonUtils import PROJECT_PATH
@@ -29,8 +30,10 @@ def tag_sents(sent):
     return pos_tag(tokens)
 
 
-def cal_tfidf(sent, idf_vectorizer=pickle.load(
-    open('%s/utils/idf_vectorizer' % PROJECT_PATH, 'r'))):
+def cal_tfidf(sent, idf_vectorizer=None):
+    if not idf_vectorizer:
+        idf_vectorizer = cPickle.load(
+            open('%s/utils/idf_vectorizer' % PROJECT_PATH, 'r'))
     tokens = tokenize_sents(sent)
     idf = idf_vectorizer.idf_
     freq_dict = defaultdict(int)
