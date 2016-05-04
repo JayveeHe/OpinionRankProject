@@ -73,7 +73,7 @@ def amazon_test(start=0, end=10):
     # print len(db_inst.distinct('asin'))
     manager_groups = {}
     limit = 10
-    asin_file = open('asin.list', 'r')
+    asin_file = open('%s/process/data/asin.list' % PROJECT_PATH, 'r')
     # for asin in db_inst.distinct('asin'):
     #     asin_file.write('%s\n' % asin)
     lines = []
@@ -83,6 +83,7 @@ def amazon_test(start=0, end=10):
     review_dicts = {}
     for asin in tlines:
         asin = asin.replace('\n', '')
+        print 'loading %s' % asin
         # limit -= 1
         # print limit
         # if limit > 0:
@@ -125,6 +126,7 @@ def amazon_test(start=0, end=10):
     labellist = []
     tokenlist = []
     nodelist = []
+    print 'start normalizing vecs'
     for pid in manager_groups.keys():
         manager = manager_groups[pid]
         # DBSCANcluster(manager, '%s_DBSCANcluster.json' % pid)
@@ -218,4 +220,4 @@ if __name__ == '__main__':
     # pickle.dump(rfclf, mfile)
     # print 'train done'
 
-    main()
+    amazon_main()
