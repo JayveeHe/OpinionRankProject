@@ -30,7 +30,7 @@ def tag_sents(sent):
 
 
 def cal_tfidf(sent, idf_vectorizer=pickle.load(
-    open('%s/python/utils/idf_vectorizer' % PROJECT_PATH, 'r'))):
+    open('%s/utils/idf_vectorizer' % PROJECT_PATH, 'r'))):
     tokens = tokenize_sents(sent)
     idf = idf_vectorizer.idf_
     freq_dict = defaultdict(int)
