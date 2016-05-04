@@ -6,3 +6,4 @@ sklearn
 seaborn
 matplotlib
 nltk
+pickle

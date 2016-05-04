@@ -1,8 +1,8 @@
 from collections import defaultdict
 import pickle
-import nltk
 from nltk import pos_tag, stem
 from nltk.tokenize import word_tokenize
+from utils.CommonUtils import PROJECT_PATH
 
 __author__ = 'jayvee'
 
@@ -30,7 +30,7 @@ def tag_sents(sent):
 
 
 def cal_tfidf(sent, idf_vectorizer=pickle.load(
-    open('/Users/jayvee/github_project/shcolarship/OpinionRankProject/python/utils/idf_vectorizer', 'r'))):
+    open('%s/python/utils/idf_vectorizer' % PROJECT_PATH, 'r'))):
     tokens = tokenize_sents(sent)
     idf = idf_vectorizer.idf_
     freq_dict = defaultdict(int)
@@ -47,12 +47,13 @@ def cal_tfidf(sent, idf_vectorizer=pickle.load(
 
 
 if __name__ == '__main__':
-    sent = "This corpus is unusual in that each corpus item contains multiple documents. just for test "
-    tokens = tokenize_sents(
-        sent)
-    tags = tag_sents(sent)
-    print tags
-    print tag_sents(stem_tokens(tokens))
-    idf_vec = pickle.load(
-        open('/Users/jayvee/github_project/shcolarship/OpinionRankProject/python/utils/idf_vectorizer', 'r'))
-    print cal_tfidf(sent, idf_vec)
+    pass
+    # sent = "This corpus is unusual in that each corpus item contains multiple documents. just for test "
+    # tokens = tokenize_sents(
+    #     sent)
+    # tags = tag_sents(sent)
+    # print tags
+    # print tag_sents(stem_tokens(tokens))
+    # idf_vec = pickle.load(
+    #     open('/Users/jayvee/github_project/shcolarship/OpinionRankProject/python/utils/idf_vectorizer', 'r'))
+    # print cal_tfidf(sent, idf_vec)

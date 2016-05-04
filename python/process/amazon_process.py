@@ -2,7 +2,6 @@
 import codecs
 import pickle
 import arrow
-from gensim import models
 import math
 from utils.CommonUtils import PROJECT_PATH
 from utils.dao_utils.mongo_utils import get_db_inst
