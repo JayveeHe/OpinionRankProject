@@ -171,28 +171,7 @@ def cal_trainset_count_errors(start, end):
     _, train_sent_list, train_label_list, train_token_list, train_node_list = amazon_test(0, 50)
 
 
-if __name__ == '__main__':
-    # _, train_sent_list, train_label_list, train_token_list, train_node_list = amazon_test(0, 20)
-    #
-    # print 'start lda training'
-    # tfidf = models.TfidfModel(train_token_list)
-    # corpus_tfidf = tfidf[train_token_list]
-    # lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=30,
-    #                             passes=10)
-    # # print lda_model.print_topics(100)
-    # mfile = open('lda_model_100t.mod', 'w')
-    # pickle.dump(lda_model, mfile)
-    # #
-    # # # train nb
-    # # nbclf = train_nb(get_lda_vec(lda_model, train_token_list), train_label_list)
-    # # mfile = open('nb_model.mod', 'w')
-    # # pickle.dump(nbclf, mfile)
-    # #
-    # rfclf = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
-    # mfile = open('rf_model.mod', 'w')
-    # pickle.dump(rfclf, mfile)
-    # print 'train done'
-
+def amazon_main():
     mfile = open('lda_model_100t.mod', 'r')
     lda_model = pickle.load(mfile)
     # mfile = open('nb_model.mod', 'r')
@@ -216,3 +195,28 @@ if __name__ == '__main__':
         # fout.write('%s,%s\n' % (u'句子', u'可信度'))
         for i in test_res:
             fout.write('%s,%s,%s,%s,%s\n' % (i[0], i[1], i[2], i[3], i[4]))
+
+
+if __name__ == '__main__':
+    # _, train_sent_list, train_label_list, train_token_list, train_node_list = amazon_test(0, 20)
+    #
+    # print 'start lda training'
+    # tfidf = models.TfidfModel(train_token_list)
+    # corpus_tfidf = tfidf[train_token_list]
+    # lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=30,
+    #                             passes=10)
+    # # print lda_model.print_topics(100)
+    # mfile = open('lda_model_100t.mod', 'w')
+    # pickle.dump(lda_model, mfile)
+    # #
+    # # # train nb
+    # # nbclf = train_nb(get_lda_vec(lda_model, train_token_list), train_label_list)
+    # # mfile = open('nb_model.mod', 'w')
+    # # pickle.dump(nbclf, mfile)
+    # #
+    # rfclf = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
+    # mfile = open('rf_model.mod', 'w')
+    # pickle.dump(rfclf, mfile)
+    # print 'train done'
+
+    main()
