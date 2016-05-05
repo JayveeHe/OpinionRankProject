@@ -181,13 +181,7 @@ def cal_testset_rank_errors(test_start, test_end, lda_model, rf_model):
     pass
 
 
-def amazon_main(test_start,test_end):
-    mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
-    lda_model = pickle.load(mfile)
-    # mfile = open('nb_model.mod', 'r')
-    # nbclf = pickle.load(mfile)
-    mfile = open('%s/process/models/rf_model_100t.mod' % PROJECT_PATH, 'r')
-    rfclf = pickle.load(mfile)
+def amazon_main(test_start, test_end, lda_model, rfclf):
     # print rfclf.feature_importances_
     _, test_sent_list, _, test_token_list, test_node_list = amazon_test(test_start, test_end)
     test_res = classify_sent(test_node_list, rfclf, lda_model)
@@ -244,5 +238,10 @@ if __name__ == '__main__':
     # mfile = open('rf_model.mod', 'w')
     # pickle.dump(rfclf, mfile)
     # print 'train done'
-
-    amazon_main()
+    mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
+    ldamodel = pickle.load(mfile)
+    # mfile = open('nb_model.mod', 'r')
+    # nbclf = pickle.load(mfile)
+    mfile = open('%s/process/models/rf_model_100t.mod' % PROJECT_PATH, 'r')
+    rfclf = pickle.load(mfile)
+    amazon_main(0, 20, ldamodel, rfclf)
