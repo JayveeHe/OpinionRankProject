@@ -175,15 +175,17 @@ def cal_error(clf_res):
 def cal_trainset_count_errors(train_start, train_end, test_start, test_end, lda_model, rf_model):
     _, train_sent_list, train_label_list, train_token_list, train_node_list = amazon_test(train_start, train_end)
 
-def cal_testset_rank_errors(test_start,test_end,lda_model,rf_model):
+
+def cal_testset_rank_errors(test_start, test_end, lda_model, rf_model):
     pass
+
 
 def amazon_main():
     mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
     lda_model = pickle.load(mfile)
     # mfile = open('nb_model.mod', 'r')
     # nbclf = pickle.load(mfile)
-    mfile = open('%s/process/models/rf_model.mod' % PROJECT_PATH, 'r')
+    mfile = open('%s/process/models/rf_model_100t.mod' % PROJECT_PATH, 'r')
     rfclf = pickle.load(mfile)
     # print rfclf.feature_importances_
     _, test_sent_list, _, test_token_list, test_node_list = amazon_test(60, 80)
