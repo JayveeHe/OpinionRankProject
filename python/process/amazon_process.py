@@ -68,7 +68,7 @@ def classify_sent(sent_node_list, clf, ldamod, labellist=None):
     return res
 
 
-def amazon_test(start=0, end=10):
+def amazon_test(start=0, end=10, label_rate=0.65):
     # prepare train set
     db_inst = get_db_inst('AmazonReviews', 'AndroidAPP')
     # print len(db_inst.distinct('asin'))
@@ -107,14 +107,15 @@ def amazon_test(start=0, end=10):
         for review in a_reviews:
             alpha_const = 0
             T = float(review['total_vote']) / max_vote
-            V = float(review['up_vote']) / review['total_vote']
+            V = 1 / (1.0 + math.exp(-0.01 * (2 * review['up_vote'] - review['total_vote'])))
+            # V = float(review['up_vote']) / review['total_vote']
             vote_rank_value = 2 * (T + alpha_const) * (V + alpha_const) / (T + V + 2 * alpha_const)
-            if vote_rank_value >= 0.65:
+            if vote_rank_value >= label_rate:
                 snm.add_node(
                     SentenceNode(review['reviewText'].lower(), extra=(int(1), vote_rank_value, review['reviewerID']),
                                  get_pos_func=tag_sents,
                                  get_keywords_func=cal_tfidf))
-            elif vote_rank_value < 0.65:
+            elif vote_rank_value < label_rate:
                 snm.add_node(
                     SentenceNode(review['reviewText'].lower(), extra=(int(0), vote_rank_value, review['reviewerID']),
                                  get_pos_func=tag_sents,
@@ -180,7 +181,7 @@ def cal_testset_rank_errors(test_start, test_end, lda_model, rf_model):
     pass
 
 
-def amazon_main():
+def amazon_main(test_start,test_end):
     mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
     lda_model = pickle.load(mfile)
     # mfile = open('nb_model.mod', 'r')
@@ -188,7 +189,7 @@ def amazon_main():
     mfile = open('%s/process/models/rf_model_100t.mod' % PROJECT_PATH, 'r')
     rfclf = pickle.load(mfile)
     # print rfclf.feature_importances_
-    _, test_sent_list, _, test_token_list, test_node_list = amazon_test(60, 80)
+    _, test_sent_list, _, test_token_list, test_node_list = amazon_test(test_start, test_end)
     test_res = classify_sent(test_node_list, rfclf, lda_model)
     ranked_res = sorted(test_res, cmp=lambda x, y: -cmp(x[3], y[3]))
     print 'done'
@@ -202,6 +203,7 @@ def amazon_main():
         # fout.write('%s,%s\n' % (u'句子', u'可信度'))
         for i in ranked_res:
             fout.write('%s,%s,%s,%s,%s\n' % (i[0], i[1], i[2], i[3], i[4]))
+    return errorsd
 
 
 def train_models(train_start, train_end):
