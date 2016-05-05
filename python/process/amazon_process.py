@@ -1,6 +1,7 @@
 # coding=utf-8
 import codecs
 import pickle
+from random import shuffle
 import arrow
 import math
 from utils.CommonUtils import PROJECT_PATH
@@ -78,6 +79,7 @@ def amazon_test(start=0, end=10):
     #     asin_file.write('%s\n' % asin)
     lines = []
     lines = asin_file.readlines()
+    shuffle(lines)
     # for asin in db_inst.distinct('asin'):
     tlines = lines[start:end]
     review_dicts = {}
@@ -101,6 +103,7 @@ def amazon_test(start=0, end=10):
             a_reviews.append(find_item)
         # process item reviews VOTE RANK
         review_rank = []
+        print '%s has %s reviews' % (asin, len(a_reviews))
         for review in a_reviews:
             alpha_const = 0
             T = float(review['total_vote']) / max_vote
@@ -138,6 +141,7 @@ def amazon_test(start=0, end=10):
             labellist.append(node.extra[0])
             tokenlist.append(node.feature2token())
             nodelist.append(node)
+    print 'end normalizing vecs'
     return veclist, sentlist, labellist, tokenlist, nodelist
 
 
@@ -158,7 +162,7 @@ def cal_error(clf_res):
     value_rank = sorted(ranklist, cmp=lambda x, y: -cmp(x[2], y[2]))
     errors = 0
     for j in xrange(len(value_rank)):
-        item = value_rank[i]
+        item = value_rank[j]
         rank_dict[item[0]]['value_rank'] = j
         rank_item = rank_dict[item[0]]
         errors += float(math.fabs(rank_item['clf_rank'] - rank_item['value_rank'])) / len(clf_res)
@@ -168,23 +172,23 @@ def cal_error(clf_res):
     # rank_dict[review_id]=
 
 
-def cal_trainset_count_errors(start, end):
-    _, train_sent_list, train_label_list, train_token_list, train_node_list = amazon_test(0, 50)
+def cal_trainset_count_errors(train_start, train_end, test_start, test_end, lda_model, rf_model):
+    _, train_sent_list, train_label_list, train_token_list, train_node_list = amazon_test(train_start, train_end)
 
+def cal_testset_rank_errors(test_start,test_end,lda_model,rf_model):
+    pass
 
 def amazon_main():
-    mfile = open('%s/process/data/lda_model_100t.mod' % PROJECT_PATH, 'r')
+    mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
     lda_model = pickle.load(mfile)
     # mfile = open('nb_model.mod', 'r')
     # nbclf = pickle.load(mfile)
-    mfile = open('%s/process/data/rf_model.mod' % PROJECT_PATH, 'r')
+    mfile = open('%s/process/models/rf_model.mod' % PROJECT_PATH, 'r')
     rfclf = pickle.load(mfile)
     # print rfclf.feature_importances_
     _, test_sent_list, _, test_token_list, test_node_list = amazon_test(60, 80)
     test_res = classify_sent(test_node_list, rfclf, lda_model)
-    # test_res = sorted(test_res, cmp=lambda x, y: -cmp(float(x.split(',')[2]), float(y.split(',')[2])))
-    # for i in test_res:
-    #     print i
+    ranked_res = sorted(test_res, cmp=lambda x, y: -cmp(x[3], y[3]))
     print 'done'
     errorsd, rankd = cal_error(test_res)
     print errorsd
@@ -194,8 +198,25 @@ def amazon_main():
         fout.write(codecs.BOM_UTF8)
         # tfout.write(codecs.BOM_UTF8)
         # fout.write('%s,%s\n' % (u'句子', u'可信度'))
-        for i in test_res:
+        for i in ranked_res:
             fout.write('%s,%s,%s,%s,%s\n' % (i[0], i[1], i[2], i[3], i[4]))
+
+
+def train_models(train_start, train_end):
+    from gensim import models
+    _, train_sent_list, train_label_list, train_token_list, train_node_list = amazon_test(train_start, train_end)
+    print 'start lda training'
+    tfidf = models.TfidfModel(train_token_list)
+    corpus_tfidf = tfidf[train_token_list]
+    lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=30,
+                                passes=10)
+    # print lda_model.print_topics(100)
+    mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'w')
+    pickle.dump(lda_model, mfile)
+    rfclf = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
+    mfile = open('%s/process/models/rf_model_100t.mod' % PROJECT_PATH, 'w')
+    pickle.dump(rfclf, mfile)
+    print 'train done'
 
 
 if __name__ == '__main__':
