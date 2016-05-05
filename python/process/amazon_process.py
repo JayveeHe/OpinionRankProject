@@ -130,6 +130,7 @@ def amazon_test(start=0, end=10, label_rate=0.65):
     labellist = []
     tokenlist = []
     nodelist = []
+    group_nodelist = []
     print 'start normalizing vecs'
     for pid in manager_groups.keys():
         manager = manager_groups[pid]
@@ -138,12 +139,15 @@ def amazon_test(start=0, end=10, label_rate=0.65):
         manager.normalize_all_sentnodes(tfidf_func=tag_sents)
         veclist.extend(manager.get_vec_list())
         sentlist.extend(manager.get_sent_list())
+        gnodelist = []
         for node in manager.node_list:
             labellist.append(node.extra[0])
             tokenlist.append(node.feature2token())
             nodelist.append(node)
+            gnodelist.append(node)
+        group_nodelist.append(gnodelist)
     print 'end normalizing vecs'
-    return veclist, sentlist, labellist, tokenlist, nodelist
+    return veclist, sentlist, labellist, tokenlist, nodelist, group_nodelist
 
 
 def cal_error(clf_res):
@@ -183,7 +187,7 @@ def cal_testset_rank_errors(test_start, test_end, lda_model, rf_model):
 
 def amazon_main(test_start, test_end, lda_model, rfclf):
     # print rfclf.feature_importances_
-    _, test_sent_list, _, test_token_list, test_node_list = amazon_test(test_start, test_end)
+    _, test_sent_list, _, test_token_list, test_node_list, test_group_nodelist = amazon_test(test_start, test_end)
     test_res = classify_sent(test_node_list, rfclf, lda_model)
     ranked_res = sorted(test_res, cmp=lambda x, y: -cmp(x[3], y[3]))
     print 'done'

@@ -1,6 +1,7 @@
 # coding=utf-8
 import math
 from textrank4zh.util import AttrDict, get_similarity
+from utils.nltk_utils import nltk_tools
 from utils.node_vec_utils.global_utils import SentenceNodeManager
 from utils.node_vec_utils.vec_building_utils import SentenceNode
 
@@ -90,6 +91,34 @@ def text_rank(sentences, num=10, sim_func=get_similarity, pagerank_config={'alph
         sorted_sentences.append(item)
 
     return sorted_sentences[:num]
+
+
+def text_en_nodelist(nodelist, sim_func=get_similarity, pagerank_config={'alpha': 0.85, }):
+    sentences = []
+    words = []
+    for node in nodelist:
+        sentences.append(node.sent)
+        words.append(nltk_tools.tokenize_sents(node.sent))
+    sorted_sentences = []
+    _source = words
+    sentences_num = len(_source)
+    graph = np.zeros((sentences_num, sentences_num))
+
+    for x in xrange(sentences_num):
+        for y in xrange(x, sentences_num):
+            similarity = sim_func(_source[x], _source[y])
+            graph[x, y] = similarity
+            graph[y, x] = similarity
+
+    nx_graph = nx.from_numpy_matrix(graph)
+    scores = nx.pagerank(nx_graph, **pagerank_config)  # this is a dict
+    sorted_scores = sorted(scores.items(), key=lambda item: item[1], reverse=True)
+
+    for index, score in sorted_scores:
+        item = AttrDict(sentence=sentences[index], weight=score)
+        sorted_sentences.append(item)
+
+    return sorted_sentences
 
 
 if __name__ == '__main__':
