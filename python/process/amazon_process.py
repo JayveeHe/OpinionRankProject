@@ -3,7 +3,7 @@ import pickle
 from random import shuffle
 import math
 import numpy as np
-from utils.CommonUtils import PROJECT_PATH
+from utils.CommonUtils import PROJECT_PATH, timer
 from utils.dao_utils.mongo_utils import get_db_inst
 from utils.nltk_utils.nltk_tools import cal_tfidf, tag_sents
 from utils.node_vec_utils.global_utils import SentenceNodeManager
@@ -45,7 +45,6 @@ def train_rf(train_vec, train_label):
     trfclf.fit(train_vec, train_label)
     # print rfclf.feature_importances_
     return trfclf
-
 
 def classify_sent(sent_node_list, clf, ldamod, labellist=None):
     """
@@ -261,6 +260,7 @@ def amazon_main(test_start, test_end, lda_model, rfclf):
             sum_oprank_errors += oprank_errors
             sum_textrank_errors += textrank_errors
             print '%s\tsum_oprank_errors: %s\tsum_textrank_errors: %s' % (info, sum_oprank_errors, sum_textrank_errors)
+            # yield sum_oprank_errors, sum_textrank_errors, info, raw_list
         except Exception, e:
             print '%s raise exceptions, details = %s' % (asin, str(e))
     # ttt = arrow.utcnow().timestamp

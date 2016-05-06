@@ -41,7 +41,6 @@ def cal_idf():
     pickle.dump(tfidf, open('brown_tfidf', 'w'))
 
 
-
 if __name__ == '__main__':
     cal_idf()
     tfidf = pickle.load(open('brown_tfidf', 'r'))

@@ -16,27 +16,54 @@ if __name__ == '__main__':
     ttt = arrow.utcnow()
     save_label = 'amazon'
     # with open('%s/process/result/%s-%s-rf_lda_feature_as_words_lda.csv' % (PROJECT_PATH, ttt, save_label), 'w')
-    with open('%s/process/result/rank_errors/%s-%s-rank_errors' % (PROJECT_PATH, ttt, save_label), 'w') as fout, \
-            open('%s/process/result/%s-%s-rf_lda_feature_as_words_lda.csv' % (PROJECT_PATH, ttt, save_label),
-                 'w') as csvout:
-        errors = []
-        x = range(10)
-        fout.write(codecs.BOM_UTF8)
-        csvout.write(codecs.BOM_UTF8)
-        for i in x:
-            try:
-                sum_oprank_errors, sum_textrank_errors, info_list, raw_list = amazon_main(0, i * 10, lda_model, rfclf)
-                # errors.append(error)
-                for info in info_list:
-                    fout.write('%s\tsum_oprank_errors: %s\tsum_textrank_errors: %s\n' % (
-                        info, sum_oprank_errors, sum_textrank_errors))
-                for raw in raw_list:
-                    csvout.write(json.dumps(raw) + '\n')
-                    # print '%s,%s\n' % (x[i], errors[i])
-            except Exception, e:
-                print e
-                continue
-        # for j in x:
-        #     fout.write('%s,%s\n' % (x[j], errors[j]))
-        #     print '%s,%s\n' % (x[j], errors[j])
-        print 'done'
+    # with open('%s/process/result/rank_errors/%s-%s-rank_errors' % (PROJECT_PATH, ttt, save_label), 'w') as fout, \
+    #         open('%s/process/result/%s-%s-rf_lda_feature_as_words_lda.csv' % (PROJECT_PATH, ttt, save_label),
+    #              'w') as csvout:
+    #     errors = []
+    #     x = range(10)
+    #     fout.write(codecs.BOM_UTF8)
+    #     csvout.write(codecs.BOM_UTF8)
+    #     for i in x:
+    #         try:
+    #             sum_oprank_errors, sum_textrank_errors, info_list, raw_list = amazon_main(0, i * 10, lda_model, rfclf)
+    #             # errors.append(error)
+    #             for info in info_list:
+    #                 fout.write('%s\tsum_oprank_errors: %s\tsum_textrank_errors: %s\n' % (
+    #                     info, sum_oprank_errors, sum_textrank_errors))
+    #             for raw in raw_list:
+    #                 csvout.write(json.dumps(raw) + '\n')
+    #                 # print '%s,%s\n' % (x[i], errors[i])
+    #         except Exception, e:
+    #             print e
+    #             continue
+    #     # for j in x:
+    #     #     fout.write('%s,%s\n' % (x[j], errors[j]))
+    #     #     print '%s,%s\n' % (x[j], errors[j])
+    #     print 'done'
+    errors = []
+    x = range(20)
+    for i in x:
+        try:
+            fout = open('%s/process/result/rank_errors/%s-%s-rank_errors-%s' % (PROJECT_PATH, ttt, save_label, i),
+                        'w')
+            csvout = open(
+                '%s/process/result/%s-%s-rawlist-%s.csv' % (PROJECT_PATH, ttt, save_label, i),
+                'w')
+            fout.write(codecs.BOM_UTF8)
+            csvout.write(codecs.BOM_UTF8)
+            sum_oprank_errors, sum_textrank_errors, info_list, raw_list = amazon_main(0, 100, lda_model, rfclf)
+            # errors.append(error)
+            for info in info_list:
+                fout.write('%s\tsum_oprank_errors: %s\tsum_textrank_errors: %s\n' % (
+                    info, sum_oprank_errors, sum_textrank_errors))
+            for raw in raw_list:
+                csvout.write(json.dumps(raw) + '\n')
+                # print '%s,%s\n' % (x[i], errors[i])
+            print 'loop %s done' % i
+        except Exception, e:
+            print e
+            continue
+    # for j in x:
+    #     fout.write('%s,%s\n' % (x[j], errors[j]))
+    #     print '%s,%s\n' % (x[j], errors[j])
+    print 'done'
