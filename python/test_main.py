@@ -33,7 +33,8 @@ if __name__ == '__main__':
                 for raw in raw_list:
                     csvout.write(raw + '\n')
                     # print '%s,%s\n' % (x[i], errors[i])
-            except:
+            except Exception,e:
+                print e
                 continue
         # for j in x:
         #     fout.write('%s,%s\n' % (x[j], errors[j]))

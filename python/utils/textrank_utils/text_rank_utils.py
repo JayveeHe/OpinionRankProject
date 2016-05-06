@@ -116,7 +116,7 @@ def text_en_nodelist(nodelist, sim_func=get_similarity, pagerank_config={'alpha'
 
     for index, score in sorted_scores:
         item = AttrDict(sentence=sentences[index], weight=score, reviewerID=nodelist[index]['extra'][2],
-                        vote_value=nodelist[index]['extra'[1]])
+                        vote_value=nodelist[index]['extra'][1])
         sorted_sentences.append(item)
 
     return sorted_sentences
