@@ -14,7 +14,7 @@ if __name__ == '__main__':
     # nbclf = pickle.load(mfile)
     mfile = open('%s/process/models/rf_model_100t.mod' % PROJECT_PATH, 'r')
     rfclf = pickle.load(mfile)
-    ttt = arrow.utcnow().timestamp
+    ttt = arrow.utcnow()
     save_label = 'amazon'
     # with open('%s/process/result/%s-%s-rf_lda_feature_as_words_lda.csv' % (PROJECT_PATH, ttt, save_label), 'w')
     with open('%s/process/result/rank_errors/rank_errors' % PROJECT_PATH, 'w') as fout, \

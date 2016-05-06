@@ -247,6 +247,7 @@ def amazon_main(test_start, test_end, lda_model, rfclf):
         textrank_errors, textrank_d = cal_textrank_error(textrank_res)
         info = 'itemID: %s\ttotal reviews: %s\toprank_errors: %s\ttextrank_errors: %s' % (
             asin, len(nodelist), oprank_errors, textrank_errors)
+        print info
         info_list.append(info)
         sum_oprank_errors += oprank_errors
         sum_textrank_errors += textrank_errors
