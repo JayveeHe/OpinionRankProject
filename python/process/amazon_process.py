@@ -5,7 +5,7 @@ import math
 import numpy as np
 from utils.CommonUtils import PROJECT_PATH, timer
 from utils.dao_utils.mongo_utils import get_db_inst
-from utils.nltk_utils.nltk_tools import cal_tfidf, tag_sents
+from utils.nltk_utils.nltk_tools import cal_en_tfidf, tag_sents
 from utils.node_vec_utils.global_utils import SentenceNodeManager
 from utils.node_vec_utils.vec_building_utils import SentenceNode
 from utils.textrank_utils.text_rank_utils import text_en_nodelist
@@ -45,6 +45,7 @@ def train_rf(train_vec, train_label):
     trfclf.fit(train_vec, train_label)
     # print rfclf.feature_importances_
     return trfclf
+
 
 def classify_sent(sent_node_list, clf, ldamod, labellist=None):
     """
@@ -123,12 +124,12 @@ def amazon_preprocess(start=0, end=10, label_rate=0.65, min_vote=0):
                 snm.add_node(
                     SentenceNode(review['reviewText'].lower(), extra=(int(1), vote_rank_value, review['reviewerID']),
                                  get_pos_func=tag_sents,
-                                 get_keywords_func=cal_tfidf))
+                                 get_keywords_func=cal_en_tfidf))
             elif vote_rank_value < label_rate:
                 snm.add_node(
                     SentenceNode(review['reviewText'].lower(), extra=(int(0), vote_rank_value, review['reviewerID']),
                                  get_pos_func=tag_sents,
-                                 get_keywords_func=cal_tfidf))
+                                 get_keywords_func=cal_en_tfidf))
             review_rank.append((review, vote_rank_value))
         manager_groups[asin] = snm
         review_dicts[asin] = review_rank
@@ -232,10 +233,11 @@ def amazon_main(test_start, test_end, lda_model, rfclf):
     _, test_sent_list, _, test_token_list, test_node_list, manager_group = amazon_preprocess(test_start, test_end)
     sum_oprank_errors = 0
     sum_textrank_errors = 0
-    info_list = []
-    raw_list = []
+    # info_list = []
+    # raw_list = []
     # 根据每个group的nodelist计算rank errors
     for asin in manager_group.keys():
+        item_rawlist = []
         manager = manager_group[asin]
         nodelist = manager.node_list
         try:
@@ -250,28 +252,23 @@ def amazon_main(test_start, test_end, lda_model, rfclf):
             for i in textrank_res:
                 tmp_item = tmp_dict[i.review_id]
                 tmp_item['text_rank_value'] = i.weight
-                raw_list.append(tmp_item)
+                item_rawlist.append(tmp_item)
+                # raw_list.append(tmp_item)
             oprank_errors, oprank_d = cal_oprank_error(oprank_res)
             textrank_errors, textrank_d = cal_textrank_error(textrank_res)
-            info = 'itemID: %s\ttotal reviews: %s\toprank_errors: %s\ttextrank_errors: %s' % (
-                asin, len(nodelist), oprank_errors, textrank_errors)
             # print info
-            info_list.append(info)
             sum_oprank_errors += oprank_errors
             sum_textrank_errors += textrank_errors
-            print '%s\tsum_oprank_errors: %s\tsum_textrank_errors: %s' % (info, sum_oprank_errors, sum_textrank_errors)
+            info = 'itemID: %s\ttotal reviews: %s\toprank_errors: %s\ttextrank_errors: %s\t' \
+                   'sum_oprank_errors: %s\tsum_textrank_errors: %s' % (
+                       asin, len(nodelist), oprank_errors, textrank_errors, sum_oprank_errors, sum_textrank_errors)
+            # info_list.append(info)
+            print info
+            yield info, item_rawlist
             # yield sum_oprank_errors, sum_textrank_errors, info, raw_list
         except Exception, e:
             print '%s raise exceptions, details = %s' % (asin, str(e))
-    # ttt = arrow.utcnow().timestamp
-    # save_label = 'amazon'
-    # with open('%s/process/result/%s-%s-rf_lda_feature_as_words_lda.csv' % (PROJECT_PATH, ttt, save_label), 'w') as fout:
-    #     fout.write(codecs.BOM_UTF8)
-    #     # tfout.write(codecs.BOM_UTF8)
-    #     # fout.write('%s,%s\n' % (u'句子', u'可信度'))
-    #     for i in ranked_res:
-    #         fout.write('%s,%s,%s,%s,%s\n' % (i[0], i[1], i[2], i[3], i[4]))
-    return sum_oprank_errors, sum_textrank_errors, info_list, raw_list
+        # return sum_oprank_errors, sum_textrank_errors, info_list, raw_list
 
 
 def train_models(train_start, train_end):

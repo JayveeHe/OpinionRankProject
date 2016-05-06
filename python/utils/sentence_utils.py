@@ -2,7 +2,7 @@
 import jieba
 import jieba.analyse
 import jieba.posseg as pseg
-from utils.nltk_utils.nltk_tools import cal_tfidf
+from utils.nltk_utils.nltk_tools import cal_en_tfidf
 
 __author__ = 'jayvee'
 
@@ -49,10 +49,10 @@ def get_keywords(sent, topk=None, keywords_func=None):
             # tags = jieba.analyse.extract_tags(sent, withWeight=True, topK=10, allowPOS=['ns', 'n', 'vn', 'v', 'nr'])
     else:
         if topk:
-            tags = cal_tfidf(sent)[:topk]
+            tags = cal_en_tfidf(sent)[:topk]
             # tags = jieba.analyse.extract_tags(sent, withWeight=True, topK=topk, allowPOS=['ns', 'n', 'vn', 'v', 'nr'])
         else:
-            tags = cal_tfidf(sent)[:10]
+            tags = cal_en_tfidf(sent)[:10]
     result = []
     for w, freq in tags:
         result.append((w, freq * len(tags)))

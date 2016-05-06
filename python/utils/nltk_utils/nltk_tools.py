@@ -30,7 +30,7 @@ def tag_sents(sent):
     return pos_tag(tokens)
 
 
-def cal_tfidf(sent, idf_vectorizer=None):
+def cal_en_tfidf(sent, idf_vectorizer=None):
     if not idf_vectorizer:
         idf_vectorizer = cPickle.load(
             open('%s/utils/idf_vectorizer' % PROJECT_PATH, 'r'))
