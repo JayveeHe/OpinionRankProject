@@ -49,7 +49,7 @@ class SentenceNode(object):
             if len(self.pos_result) == 0:
                 return 0.0
             for pos in self.pos_result:
-                if pos[1] in ['v', 'vn', 'vd', 'vi','VB','VBD','VBG','VBN','VBP','VBZ']:
+                if pos[1] in ['v', 'vn', 'vd', 'vi', 'VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ']:
                     verb_count += 1.0
             return verb_count / len(self.pos_result)
 
@@ -75,7 +75,7 @@ class SentenceNode(object):
             if len(self.pos_result) == 0:
                 return 0.0
             for pos in self.pos_result:
-                if pos[1] in ['a', 'ad', 'an', 'ag', 'al','JJ','JJR','JJS']:
+                if pos[1] in ['a', 'ad', 'an', 'ag', 'al', 'JJ', 'JJR', 'JJS']:
                     tmp_count += 1.0
             return tmp_count / len(self.pos_result)
 

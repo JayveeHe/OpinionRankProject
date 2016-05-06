@@ -9,6 +9,7 @@ from utils.dao_utils.mongo_utils import get_db_inst
 from utils.nltk_utils.nltk_tools import cal_tfidf, tag_sents
 from utils.node_vec_utils.global_utils import SentenceNodeManager
 from utils.node_vec_utils.vec_building_utils import SentenceNode
+from utils.textrank_utils.text_rank_utils import text_en_nodelist
 
 __author__ = 'jayvee'
 
@@ -48,6 +49,14 @@ def train_rf(train_vec, train_label):
 
 
 def classify_sent(sent_node_list, clf, ldamod, labellist=None):
+    """
+    根据训练好的clf与ldamod，对输入的nodelist进行重要度分类
+    :param sent_node_list:
+    :param clf:
+    :param ldamod:
+    :param labellist:
+    :return:
+    """
     tlist = []
     for node in sent_node_list:
         tlist.append(node.feature2token())
@@ -68,30 +77,31 @@ def classify_sent(sent_node_list, clf, ldamod, labellist=None):
     return res
 
 
-def amazon_test(start=0, end=10, label_rate=0.65):
+def amazon_preprocess(start=0, end=10, label_rate=0.65):
+    """
+
+    :param start:
+    :param end:
+    :param label_rate:
+    :return:
+    """
     # prepare train set
     db_inst = get_db_inst('AmazonReviews', 'AndroidAPP')
     # print len(db_inst.distinct('asin'))
     manager_groups = {}
-    limit = 10
     asin_file = open('%s/process/data/asin.list' % PROJECT_PATH, 'r')
     # for asin in db_inst.distinct('asin'):
     #     asin_file.write('%s\n' % asin)
-    lines = []
     lines = asin_file.readlines()
     shuffle(lines)
     # for asin in db_inst.distinct('asin'):
     tlines = lines[start:end]
     review_dicts = {}
+    asin_list = []
     for asin in tlines:
         asin = asin.replace('\n', '')
+        asin_list.append(asin)
         print 'loading %s' % asin
-        # limit -= 1
-        # print limit
-        # if limit > 0:
-        # if asin in manager_groups:
-        #     manager_groups[asin].add_node(SentenceNode(splits[4], extra=int(ll)))
-        # else:
         snm = SentenceNodeManager()
         # snm.add_node(SentenceNode(splits[4], extra=int(ll)))
 
@@ -147,10 +157,15 @@ def amazon_test(start=0, end=10, label_rate=0.65):
             gnodelist.append(node)
         group_nodelist.append(gnodelist)
     print 'end normalizing vecs'
-    return veclist, sentlist, labellist, tokenlist, nodelist, group_nodelist
+    return veclist, sentlist, labellist, tokenlist, nodelist, manager_groups
 
 
-def cal_error(clf_res):
+def cal_oprank_error(clf_res):
+    """
+    计算opinion rank分类算法的rank结果与基于投票的ground truth的rank结果做比较
+    :param clf_res:
+    :return:
+    """
     rank_dict = {}
     ranklist = []
     for _, _, clf_value, rank_value, review_id in clf_res:
@@ -174,39 +189,82 @@ def cal_error(clf_res):
     return errors, rank_dict
 
 
+def cal_textrank_error(sorted_sents):
+    """
+    计算textrank的结果与voterank的差别
+    :param sorted_sents:
+    :return:
+    """
+    rank_dict = {}
+    ranklist = []
+    for sorted_sent in sorted_sents:
+        ranklist.append((sorted_sent.review_id, sorted_sent.weight, sorted_sent.vote_value))
+    # sort
+    clf_rank = sorted(ranklist, cmp=lambda x, y: -cmp(x[1], y[1]))
+    for i in xrange(len(clf_rank)):
+        item = clf_rank[i]
+        rank_dict[item[0]] = {'clf_rank': i}
+    value_rank = sorted(ranklist, cmp=lambda x, y: -cmp(x[2], y[2]))
+    errors = 0
+    for j in xrange(len(value_rank)):
+        item = value_rank[j]
+        rank_dict[item[0]]['value_rank'] = j
+        rank_item = rank_dict[item[0]]
+        errors += float(math.fabs(rank_item['clf_rank'] - rank_item['value_rank'])) / len(sorted_sents)
+    return errors, rank_dict
+
     # rank_dict[review_id]=
 
 
 def cal_trainset_count_errors(train_start, train_end, test_start, test_end, lda_model, rf_model):
-    _, train_sent_list, train_label_list, train_token_list, train_node_list = amazon_test(train_start, train_end)
-
-
-def cal_testset_rank_errors(test_start, test_end, lda_model, rf_model):
-    pass
+    _, train_sent_list, train_label_list, train_token_list, train_node_list = amazon_preprocess(train_start, train_end)
 
 
 def amazon_main(test_start, test_end, lda_model, rfclf):
+    """
+    亚马逊评论的处理main函数，用于统一入口调用
+    :param test_start:
+    :param test_end:
+    :param lda_model:
+    :param rfclf:
+    :return:
+    """
     # print rfclf.feature_importances_
-    _, test_sent_list, _, test_token_list, test_node_list, test_group_nodelist = amazon_test(test_start, test_end)
-    test_res = classify_sent(test_node_list, rfclf, lda_model)
-    ranked_res = sorted(test_res, cmp=lambda x, y: -cmp(x[3], y[3]))
-    print 'done'
-    errorsd, rankd = cal_error(test_res)
-    print errorsd
-    ttt = arrow.utcnow().timestamp
-    save_label = 'amazon'
-    with open('%s/process/result/%s-%s-rf_lda_feature_as_words_lda.csv' % (PROJECT_PATH, ttt, save_label), 'w') as fout:
-        fout.write(codecs.BOM_UTF8)
-        # tfout.write(codecs.BOM_UTF8)
-        # fout.write('%s,%s\n' % (u'句子', u'可信度'))
-        for i in ranked_res:
-            fout.write('%s,%s,%s,%s,%s\n' % (i[0], i[1], i[2], i[3], i[4]))
-    return errorsd
+    _, test_sent_list, _, test_token_list, test_node_list, manager_group = amazon_preprocess(test_start, test_end)
+    sum_oprank_errors = 0
+    sum_textrank_errors = 0
+    info_list = []
+    raw_list = []
+    # 根据每个group的nodelist计算rank errors
+    for asin in manager_group.keys():
+        manager = manager_group[asin]
+        nodelist = manager.node_list
+        oprank_res = classify_sent(nodelist, rfclf, lda_model)
+        for i in oprank_res:
+            raw_list.append('%s,%s,%s,%s,%s,%s' % (asin, i[4], i[0], i[1], i[2], i[3]))
+        textrank_res = text_en_nodelist(nodelist)
+        oprank_errors, oprank_d = cal_oprank_error(oprank_res)
+        textrank_errors, textrank_d = cal_textrank_error(textrank_res)
+        info = 'itemID: %s\ttotal reviews: %s\toprank_errors: %s\ttextrank_errors: %s' % (
+            asin, len(nodelist), oprank_errors, textrank_errors)
+        info_list.append(info)
+        sum_oprank_errors += oprank_errors
+        sum_textrank_errors += textrank_errors
+    # ttt = arrow.utcnow().timestamp
+    # save_label = 'amazon'
+    # with open('%s/process/result/%s-%s-rf_lda_feature_as_words_lda.csv' % (PROJECT_PATH, ttt, save_label), 'w') as fout:
+    #     fout.write(codecs.BOM_UTF8)
+    #     # tfout.write(codecs.BOM_UTF8)
+    #     # fout.write('%s,%s\n' % (u'句子', u'可信度'))
+    #     for i in ranked_res:
+    #         fout.write('%s,%s,%s,%s,%s\n' % (i[0], i[1], i[2], i[3], i[4]))
+    return sum_oprank_errors, sum_textrank_errors, info_list, raw_list
 
 
 def train_models(train_start, train_end):
     from gensim import models
-    _, train_sent_list, train_label_list, train_token_list, train_node_list = amazon_test(train_start, train_end)
+    _, train_sent_list, train_label_list, train_token_list, train_node_list, _ = amazon_preprocess(train_start,
+                                                                                                   train_end)
     print 'start lda training'
     tfidf = models.TfidfModel(train_token_list)
     corpus_tfidf = tfidf[train_token_list]
@@ -242,10 +300,11 @@ if __name__ == '__main__':
     # mfile = open('rf_model.mod', 'w')
     # pickle.dump(rfclf, mfile)
     # print 'train done'
-    mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
-    ldamodel = pickle.load(mfile)
-    # mfile = open('nb_model.mod', 'r')
-    # nbclf = pickle.load(mfile)
-    mfile = open('%s/process/models/rf_model_100t.mod' % PROJECT_PATH, 'r')
-    rfclf = pickle.load(mfile)
-    amazon_main(0, 20, ldamodel, rfclf)
+    pass
+    # mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
+    # ldamodel = pickle.load(mfile)
+    # # mfile = open('nb_model.mod', 'r')
+    # # nbclf = pickle.load(mfile)
+    # mfile = open('%s/process/models/rf_model_100t.mod' % PROJECT_PATH, 'r')
+    # rfclf = pickle.load(mfile)
+    # amazon_main(0, 20, ldamodel, rfclf)

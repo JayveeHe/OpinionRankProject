@@ -5,7 +5,7 @@ import re
 
 import arrow
 from gensim import models
-from process.amazon_process import amazon_test
+from process.amazon_process import amazon_preprocess
 
 from utils.node_vec_utils.global_utils import SentenceNodeManager
 from utils.node_vec_utils.vec_building_utils import SentenceNode
@@ -105,7 +105,7 @@ def feature_lda(save_label):
     # _, train_sent_list, train_label_list, train_token_list, train_node_list = preprocess(
     #     '/Users/jayvee/github_project/shcolarship/OpinionRankProject/python/crawler/data/csv/train_set.csv')
 
-    _, train_sent_list, train_label_list, train_token_list, train_node_list = amazon_test()
+    _, train_sent_list, train_label_list, train_token_list, train_node_list = amazon_preprocess()
 
     test_path = '/Users/jayvee/github_project/shcolarship/OpinionRankProject/python/crawler/data/csv/1461611102-飘柔护发素高纯度焗油.csv'
     _, test_sent_list, _, test_token_list, test_node_list = preprocess(
