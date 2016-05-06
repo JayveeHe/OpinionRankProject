@@ -29,11 +29,12 @@ if __name__ == '__main__':
                 sum_oprank_errors, sum_textrank_errors, info_list, raw_list = amazon_main(0, i * 10, lda_model, rfclf)
                 # errors.append(error)
                 for info in info_list:
-                    fout.write(info + '\n')
+                    fout.write('%s\tsum_oprank_errors: %s\tsum_textrank_errors: %s\n' % (
+                        info, sum_oprank_errors, sum_textrank_errors))
                 for raw in raw_list:
                     csvout.write(raw + '\n')
                     # print '%s,%s\n' % (x[i], errors[i])
-            except Exception,e:
+            except Exception, e:
                 print e
                 continue
         # for j in x:
