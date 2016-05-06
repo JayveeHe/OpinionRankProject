@@ -247,10 +247,11 @@ def amazon_main(test_start, test_end, lda_model, rfclf):
         textrank_errors, textrank_d = cal_textrank_error(textrank_res)
         info = 'itemID: %s\ttotal reviews: %s\toprank_errors: %s\ttextrank_errors: %s' % (
             asin, len(nodelist), oprank_errors, textrank_errors)
-        print info
+        # print info
         info_list.append(info)
         sum_oprank_errors += oprank_errors
         sum_textrank_errors += textrank_errors
+        print '%s\tsum_oprank_errors: %s\tsum_textrank_errors: %s' % (info, sum_oprank_errors, sum_textrank_errors)
     # ttt = arrow.utcnow().timestamp
     # save_label = 'amazon'
     # with open('%s/process/result/%s-%s-rf_lda_feature_as_words_lda.csv' % (PROJECT_PATH, ttt, save_label), 'w') as fout:
