@@ -1,9 +1,8 @@
 # coding=utf-8
-import codecs
 import pickle
 from random import shuffle
-import arrow
 import math
+import numpy as np
 from utils.CommonUtils import PROJECT_PATH
 from utils.dao_utils.mongo_utils import get_db_inst
 from utils.nltk_utils.nltk_tools import cal_tfidf, tag_sents
@@ -64,6 +63,7 @@ def classify_sent(sent_node_list, clf, ldamod, labellist=None):
     res = []
     for i in xrange(len(vecs)):
         vec = vecs[i]
+        vec = np.array(vec).reshape((1, -1))
         if labellist:
             clf_result = clf.predict_proba(vec)[0]
             res.append((
@@ -77,7 +77,7 @@ def classify_sent(sent_node_list, clf, ldamod, labellist=None):
     return res
 
 
-def amazon_preprocess(start=0, end=10, label_rate=0.65):
+def amazon_preprocess(start=0, end=10, label_rate=0.65, min_vote=0):
     """
 
     :param start:
@@ -108,7 +108,7 @@ def amazon_preprocess(start=0, end=10, label_rate=0.65):
         # 计算每个APP下的评论
         a_reviews = []
         max_vote = 0  # 常量
-        for find_item in db_inst.find({"asin": asin, 'total_vote': {"$gt": 0}}):
+        for find_item in db_inst.find({"asin": asin, 'total_vote': {"$gt": min_vote}}):
             max_vote = max(find_item['total_vote'], max_vote)
             a_reviews.append(find_item)
         # process item reviews VOTE RANK
@@ -239,19 +239,30 @@ def amazon_main(test_start, test_end, lda_model, rfclf):
     for asin in manager_group.keys():
         manager = manager_group[asin]
         nodelist = manager.node_list
-        oprank_res = classify_sent(nodelist, rfclf, lda_model)
-        for i in oprank_res:
-            raw_list.append('%s,%s,%s,%s,%s,%s' % (asin, i[4], i[0], i[1], i[2], i[3]))
-        textrank_res = text_en_nodelist(nodelist)
-        oprank_errors, oprank_d = cal_oprank_error(oprank_res)
-        textrank_errors, textrank_d = cal_textrank_error(textrank_res)
-        info = 'itemID: %s\ttotal reviews: %s\toprank_errors: %s\ttextrank_errors: %s' % (
-            asin, len(nodelist), oprank_errors, textrank_errors)
-        # print info
-        info_list.append(info)
-        sum_oprank_errors += oprank_errors
-        sum_textrank_errors += textrank_errors
-        print '%s\tsum_oprank_errors: %s\tsum_textrank_errors: %s' % (info, sum_oprank_errors, sum_textrank_errors)
+        try:
+            oprank_res = classify_sent(nodelist, rfclf, lda_model)
+            tmp_dict = {}
+            for i in oprank_res:
+                tmp_dict[i[4]] = {'asin': asin, 'reviewerID': i[4], 'label': i[0], 'sent': i[1],
+                                  'opinion_rank_value': i[2],
+                                  'vote_value': i[3]}
+                # raw_list.append('%s,%s,%s,%s,%s,%s' % (asin, i[4], i[0], i[1], i[2], i[3]))
+            textrank_res = text_en_nodelist(nodelist)
+            for i in textrank_res:
+                tmp_item = tmp_dict[i.review_id]
+                tmp_item['text_rank_value'] = i.weight
+                raw_list.append(tmp_item)
+            oprank_errors, oprank_d = cal_oprank_error(oprank_res)
+            textrank_errors, textrank_d = cal_textrank_error(textrank_res)
+            info = 'itemID: %s\ttotal reviews: %s\toprank_errors: %s\ttextrank_errors: %s' % (
+                asin, len(nodelist), oprank_errors, textrank_errors)
+            # print info
+            info_list.append(info)
+            sum_oprank_errors += oprank_errors
+            sum_textrank_errors += textrank_errors
+            print '%s\tsum_oprank_errors: %s\tsum_textrank_errors: %s' % (info, sum_oprank_errors, sum_textrank_errors)
+        except Exception, e:
+            print '%s raise exceptions, details = %s' % (asin, str(e))
     # ttt = arrow.utcnow().timestamp
     # save_label = 'amazon'
     # with open('%s/process/result/%s-%s-rf_lda_feature_as_words_lda.csv' % (PROJECT_PATH, ttt, save_label), 'w') as fout:

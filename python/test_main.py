@@ -1,4 +1,5 @@
 import codecs
+import json
 import arrow
 from process.amazon_process import amazon_main, train_models
 import pickle
@@ -10,14 +11,12 @@ if __name__ == '__main__':
     # train_models(0, 100)
     mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
     lda_model = pickle.load(mfile)
-    # mfile = open('nb_model.mod', 'r')
-    # nbclf = pickle.load(mfile)
     mfile = open('%s/process/models/rf_model_100t.mod' % PROJECT_PATH, 'r')
     rfclf = pickle.load(mfile)
     ttt = arrow.utcnow()
     save_label = 'amazon'
     # with open('%s/process/result/%s-%s-rf_lda_feature_as_words_lda.csv' % (PROJECT_PATH, ttt, save_label), 'w')
-    with open('%s/process/result/rank_errors/rank_errors' % PROJECT_PATH, 'w') as fout, \
+    with open('%s/process/result/rank_errors/%s-%s-rank_errors' % (PROJECT_PATH, ttt, save_label), 'w') as fout, \
             open('%s/process/result/%s-%s-rf_lda_feature_as_words_lda.csv' % (PROJECT_PATH, ttt, save_label),
                  'w') as csvout:
         errors = []
@@ -32,7 +31,7 @@ if __name__ == '__main__':
                     fout.write('%s\tsum_oprank_errors: %s\tsum_textrank_errors: %s\n' % (
                         info, sum_oprank_errors, sum_textrank_errors))
                 for raw in raw_list:
-                    csvout.write(raw + '\n')
+                    csvout.write(json.dumps(raw) + '\n')
                     # print '%s,%s\n' % (x[i], errors[i])
             except Exception, e:
                 print e
