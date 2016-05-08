@@ -3,11 +3,20 @@ import json
 import arrow
 from process.amazon_process import amazon_main, train_models
 import pickle
+from process.statistics_process import handle_amazon_result
 from utils.CommonUtils import PROJECT_PATH
 
 __author__ = 'jayvee'
 
-if __name__ == '__main__':
+
+def handle_result_main():
+    for i in range(50):
+        handle_amazon_result('%s/process/result/rank_errors/'
+                             '2016-05-06T16:26:42.595089+00:00-amazon-rank_errors-%s' % (
+                                 PROJECT_PATH, i))
+
+
+def handle_amazon_main():
     # train_models(0, 100)
     mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
     lda_model = pickle.load(mfile)
@@ -70,3 +79,7 @@ if __name__ == '__main__':
     #     fout.write('%s,%s\n' % (x[j], errors[j]))
     #     print '%s,%s\n' % (x[j], errors[j])
     print 'done'
+
+
+if __name__ == '__main__':
+    handle_result_main()

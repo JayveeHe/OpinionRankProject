@@ -102,7 +102,6 @@ def amazon_preprocess(start=0, end=10, label_rate=0.65, min_vote=0):
         asin = asin.replace('\n', '')
         asin_list.append(asin)
         print 'loading %s' % asin
-        snm = SentenceNodeManager()
         # snm.add_node(SentenceNode(splits[4], extra=int(ll)))
 
         # 计算每个APP下的评论
@@ -114,6 +113,7 @@ def amazon_preprocess(start=0, end=10, label_rate=0.65, min_vote=0):
         # process item reviews VOTE RANK
         review_rank = []
         print '%s has %s reviews' % (asin, len(a_reviews))
+        snm = SentenceNodeManager()
         for review in a_reviews:
             alpha_const = 0
             T = float(review['total_vote']) / max_vote
