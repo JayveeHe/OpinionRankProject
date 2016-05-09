@@ -79,6 +79,8 @@ def handle_amazon_by_review_range(low, high, limit=None):
         asin_list = asin_list[:limit]
     for asin in asin_list:
         info, raw_list = amazon_preproc_by_asin(asin, rfclf=rfclf, lda_model=lda_model)
+        if raw_list is None:
+            continue
         for raw in raw_list:
             csvout.write(json.dumps(raw) + '\n')
         splits = info.split('\t')
@@ -99,5 +101,5 @@ def handle_amazon_by_review_range(low, high, limit=None):
 
 
 if __name__ == '__main__':
-    handle_amazon_by_review_range(650, 1100, limit=100)
+    handle_amazon_by_review_range(500, 600, limit=30)
     # handle_result_main()
