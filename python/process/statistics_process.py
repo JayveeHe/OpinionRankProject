@@ -141,5 +141,5 @@ def handle_amazon_result(fin_path):
 
 if __name__ == '__main__':
     # count_vote_dist()
-    # plot_errors_curves()
-    count_item_reviews_dist()
+    plot_errors_curves()
+    # count_item_reviews_dist()

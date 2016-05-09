@@ -172,7 +172,7 @@ def amazon_preproc_by_asin(asin, rfclf, lda_model, label_rate=0.65):
     db_inst = get_db_inst('AmazonReviews', 'AndroidAPP')  # 计算每个APP下的评论
     a_reviews = []
     max_vote = 0  # 常量
-    for find_item in db_inst.find({"asin": asin}):
+    for find_item in db_inst.find({"asin": asin, 'total_vote': {"$gt": 0}}):
         max_vote = max(find_item['total_vote'], max_vote)
         a_reviews.append(find_item)
     # process item reviews VOTE RANK
