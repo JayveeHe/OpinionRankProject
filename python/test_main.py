@@ -1,7 +1,8 @@
 import codecs
 import json
+import random
 import arrow
-from process.amazon_process import amazon_main, train_models
+from process.amazon_process import amazon_main, train_models, amazon_preproc_by_asin
 import pickle
 from process.statistics_process import handle_amazon_result
 from utils.CommonUtils import PROJECT_PATH
@@ -24,31 +25,6 @@ def handle_amazon_main():
     rfclf = pickle.load(mfile)
     ttt = arrow.utcnow()
     save_label = 'amazon'
-    # with open('%s/process/result/%s-%s-rf_lda_feature_as_words_lda.csv' % (PROJECT_PATH, ttt, save_label), 'w')
-    # with open('%s/process/result/rank_errors/%s-%s-rank_errors' % (PROJECT_PATH, ttt, save_label), 'w') as fout, \
-    #         open('%s/process/result/%s-%s-rf_lda_feature_as_words_lda.csv' % (PROJECT_PATH, ttt, save_label),
-    #              'w') as csvout:
-    #     errors = []
-    #     x = range(10)
-    #     fout.write(codecs.BOM_UTF8)
-    #     csvout.write(codecs.BOM_UTF8)
-    #     for i in x:
-    #         try:
-    #             sum_oprank_errors, sum_textrank_errors, info_list, raw_list = amazon_main(0, i * 10, lda_model, rfclf)
-    #             # errors.append(error)
-    #             for info in info_list:
-    #                 fout.write('%s\tsum_oprank_errors: %s\tsum_textrank_errors: %s\n' % (
-    #                     info, sum_oprank_errors, sum_textrank_errors))
-    #             for raw in raw_list:
-    #                 csvout.write(json.dumps(raw) + '\n')
-    #                 # print '%s,%s\n' % (x[i], errors[i])
-    #         except Exception, e:
-    #             print e
-    #             continue
-    #     # for j in x:
-    #     #     fout.write('%s,%s\n' % (x[j], errors[j]))
-    #     #     print '%s,%s\n' % (x[j], errors[j])
-    #     print 'done'
     errors = []
     x = range(50)
     for i in x:
@@ -65,12 +41,6 @@ def handle_amazon_main():
                 fout.write('%s\n' % info)
                 for raw in raw_list:
                     csvout.write(json.dumps(raw) + '\n')
-                    # errors.append(error)
-                    # for info in info_list:
-                    #     fout.write('%s\n' % info)
-                    # for raw in raw_list:
-                    #     csvout.write(json.dumps(raw) + '\n')
-                    # print '%s,%s\n' % (x[i], errors[i])
             print 'loop %s done' % i
         except Exception, e:
             print e
@@ -81,5 +51,52 @@ def handle_amazon_main():
     print 'done'
 
 
+def handle_amazon_by_review_range(low, high, limit=None):
+    from utils.dao_utils.mongo_utils import get_db_inst
+    mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
+    lda_model = pickle.load(mfile)
+    mfile = open('%s/process/models/rf_model_100t.mod' % PROJECT_PATH, 'r')
+    rfclf = pickle.load(mfile)
+    # ttt = arrow.utcnow()
+    # save_label = 'amazon'
+    meta_db_inst = get_db_inst('AmazonReviews', 'AndroidAPP_Meta')
+    db_result = get_db_inst('AmazonReviews', 'AndroidAPP_result')
+    meta_result = meta_db_inst.find({"vote_reviews_count": {"$gte": low, "$lte": high}}, {"asin": 1})
+    count = 0
+    ttt = arrow.utcnow()
+    save_label = 'amazon'
+    csvout = open(
+        '%s/process/result/%s-%s-rawlist-%s.csv' % (PROJECT_PATH, ttt, save_label, 0),
+        'w')
+    csvout.write(codecs.BOM_UTF8)
+    asin_list = []
+    for res in meta_result:
+        asin_list.append(res['asin'])
+    random.shuffle(asin_list)  # ensure random
+    if limit:
+        limit = min(limit, len(asin_list))  # maybe not necessary
+        asin_list = asin_list[:limit]
+    for asin in asin_list:
+        info, raw_list = amazon_preproc_by_asin(asin, rfclf=rfclf, lda_model=lda_model)
+        for raw in raw_list:
+            csvout.write(json.dumps(raw) + '\n')
+        splits = info.split('\t')
+        item_id = splits[0].replace('itemID: ', '')
+        total_reviews = eval(splits[1].replace('total reviews: ', ''))
+        oprank_errors = eval(splits[2].replace('oprank_errors: ', ''))
+        textrank_errors = eval(splits[3].replace('textrank_errors: ', ''))
+        sum_oprank_errors = eval(splits[4].replace('sum_oprank_errors: ', ''))
+        sum_textrank_errors = eval(splits[5].replace('sum_textrank_errors: ', ''))
+        item = {'item_id': item_id, 'total_reviews': total_reviews, 'oprank_errors': oprank_errors,
+                'textrank_errors': textrank_errors, 'sum_oprank_errors': sum_oprank_errors,
+                'sum_textrank_errors': sum_textrank_errors}
+        db_result.insert({'itemID': item['item_id'], 'total_reviews': item['total_reviews'],
+                          'oprank_errors': item['oprank_errors'],
+                          'textrank_errors': item['textrank_errors']})
+        count += 1
+    print 'handle %s docs' % count
+
+
 if __name__ == '__main__':
-    handle_result_main()
+    handle_amazon_by_review_range(10, 20, limit=100)
+    # handle_result_main()

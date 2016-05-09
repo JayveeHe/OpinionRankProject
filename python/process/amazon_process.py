@@ -160,6 +160,86 @@ def amazon_preprocess(start=0, end=10, label_rate=0.65, min_vote=0):
     return veclist, sentlist, labellist, tokenlist, nodelist, manager_groups
 
 
+def amazon_preproc_by_asin(asin, rfclf, lda_model, label_rate=0.65):
+    """
+    根据asin直接分析某个商品下的评论
+    :param asin:
+    :return:
+    """
+    # review_dicts = {}
+    # asin_list = []
+    manager_groups = {}
+    db_inst = get_db_inst('AmazonReviews', 'AndroidAPP')  # 计算每个APP下的评论
+    a_reviews = []
+    max_vote = 0  # 常量
+    for find_item in db_inst.find({"asin": asin}):
+        max_vote = max(find_item['total_vote'], max_vote)
+        a_reviews.append(find_item)
+    # process item reviews VOTE RANK
+    review_rank = []
+    print '%s has %s reviews' % (asin, len(a_reviews))
+    snm = SentenceNodeManager()
+    for review in a_reviews:
+        alpha_const = 0
+        T = float(review['total_vote']) / max_vote
+        V = 1 / (1.0 + math.exp(-0.01 * (2 * review['up_vote'] - review['total_vote'])))
+        # V = float(review['up_vote']) / review['total_vote']
+        vote_rank_value = 2 * (T + alpha_const) * (V + alpha_const) / (T + V + 2 * alpha_const)
+        if vote_rank_value >= label_rate:
+            snm.add_node(
+                SentenceNode(review['reviewText'].lower(), extra=(int(1), vote_rank_value, review['reviewerID']),
+                             get_pos_func=tag_sents,
+                             get_keywords_func=cal_en_tfidf))
+        elif vote_rank_value < label_rate:
+            snm.add_node(
+                SentenceNode(review['reviewText'].lower(), extra=(int(0), vote_rank_value, review['reviewerID']),
+                             get_pos_func=tag_sents,
+                             get_keywords_func=cal_en_tfidf))
+            # review_rank.append((review, vote_rank_value))
+    manager_groups[asin] = snm
+    # review_dicts[asin] = review_rank
+    # nodelist = []
+    # group_nodelist = []
+    print 'start normalizing vecs'
+    snm.normalize_all_sentnodes(tfidf_func=tag_sents)
+    print 'end normalizing vecs'
+    # cal rank errors
+    sum_oprank_errors = 0
+    sum_textrank_errors = 0
+    item_rawlist = []
+    # manager = manager_groups[asin]
+    nodelist = snm.node_list
+    try:
+        oprank_res = classify_sent(nodelist, rfclf, lda_model)
+        tmp_dict = {}
+        for i in oprank_res:
+            tmp_dict[i[4]] = {'asin': asin, 'reviewerID': i[4], 'label': i[0], 'sent': i[1],
+                              'opinion_rank_value': i[2],
+                              'vote_value': i[3]}
+            # raw_list.append('%s,%s,%s,%s,%s,%s' % (asin, i[4], i[0], i[1], i[2], i[3]))
+        textrank_res = text_en_nodelist(nodelist)
+        for i in textrank_res:
+            tmp_item = tmp_dict[i.review_id]
+            tmp_item['text_rank_value'] = i.weight
+            item_rawlist.append(tmp_item)
+            # raw_list.append(tmp_item)
+        oprank_errors, oprank_d = cal_oprank_error(oprank_res)
+        textrank_errors, textrank_d = cal_textrank_error(textrank_res)
+        # print info
+        sum_oprank_errors += oprank_errors
+        sum_textrank_errors += textrank_errors
+        info = 'itemID: %s\ttotal reviews: %s\toprank_errors: %s\ttextrank_errors: %s\t' \
+               'sum_oprank_errors: %s\tsum_textrank_errors: %s' % (
+                   asin, len(nodelist), oprank_errors, textrank_errors, sum_oprank_errors, sum_textrank_errors)
+        # info_list.append(info)
+        print info
+
+        return info, item_rawlist
+        # yield sum_oprank_errors, sum_textrank_errors, info, raw_list
+    except Exception, e:
+        print '%s raise exceptions, details = %s' % (asin, str(e))
+
+
 def cal_oprank_error(clf_res):
     """
     计算opinion rank分类算法的rank结果与基于投票的ground truth的rank结果做比较
@@ -217,7 +297,8 @@ def cal_textrank_error(sorted_sents):
 
 
 def cal_trainset_count_errors(train_start, train_end, test_start, test_end, lda_model, rf_model):
-    _, train_sent_list, train_label_list, train_token_list, train_node_list = amazon_preprocess(train_start, train_end)
+    _, train_sent_list, train_label_list, train_token_list, train_node_list, _ = amazon_preprocess(train_start,
+                                                                                                   train_end)
 
 
 def amazon_main(test_start, test_end, lda_model, rfclf):
@@ -268,7 +349,7 @@ def amazon_main(test_start, test_end, lda_model, rfclf):
             # yield sum_oprank_errors, sum_textrank_errors, info, raw_list
         except Exception, e:
             print '%s raise exceptions, details = %s' % (asin, str(e))
-        # return sum_oprank_errors, sum_textrank_errors, info_list, raw_list
+            # return sum_oprank_errors, sum_textrank_errors, info_list, raw_list
 
 
 def train_models(train_start, train_end):

@@ -19,7 +19,12 @@ def get_db_inst(db_name, collection_name):
 
 
 def create_index(db_name, collection_name, index_conf):
-    db_inst = get_db_inst(db_name,collection_name)
+    db_inst = get_db_inst(db_name, collection_name)
     print db_inst.create_indexes(index_conf)
 
 
+def find_all(find_filter, db_inst, sort_filter=None):
+    MAX_COUNT = db_inst.find(find_filter).count()
+
+    if not sort_filter:
+        db_inst.find(find_filter)
