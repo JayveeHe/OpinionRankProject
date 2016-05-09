@@ -234,11 +234,11 @@ def amazon_preproc_by_asin(asin, rfclf, lda_model, label_rate=0.65):
                    asin, len(nodelist), oprank_errors, textrank_errors, sum_oprank_errors, sum_textrank_errors)
         # info_list.append(info)
         print info
-
         return info, item_rawlist
         # yield sum_oprank_errors, sum_textrank_errors, info, raw_list
     except Exception, e:
         print '%s raise exceptions, details = %s' % (asin, str(e))
+        return None, None
 
 
 def cal_oprank_error(clf_res):
