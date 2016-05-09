@@ -72,6 +72,7 @@ def handle_amazon_by_review_range(low, high, limit=None):
     asin_list = []
     for res in meta_result:
         asin_list.append(res['asin'])
+    print 'original result: %s' % len(asin_list)
     random.shuffle(asin_list)  # ensure random
     if limit:
         limit = min(limit, len(asin_list))  # maybe not necessary
@@ -98,5 +99,5 @@ def handle_amazon_by_review_range(low, high, limit=None):
 
 
 if __name__ == '__main__':
-    handle_amazon_by_review_range(10, 20, limit=100)
+    handle_amazon_by_review_range(650, 1100, limit=100)
     # handle_result_main()

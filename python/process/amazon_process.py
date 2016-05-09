@@ -160,6 +160,7 @@ def amazon_preprocess(start=0, end=10, label_rate=0.65, min_vote=0):
     return veclist, sentlist, labellist, tokenlist, nodelist, manager_groups
 
 
+@timer
 def amazon_preproc_by_asin(asin, rfclf, lda_model, label_rate=0.65):
     """
     根据asin直接分析某个商品下的评论
