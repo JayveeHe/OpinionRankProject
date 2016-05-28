@@ -139,7 +139,7 @@ class SentenceNode(object):
         self.g_sent_len = cal_sigmoid_std(self.sent_len, mean_sent_len, std_sent_len)
         # tfidf vec
         global_keywords = group_paras['global_keywords']
-        self.g_tfidf_rate = [0.0] * len(global_keywords)
+        self.g_tfidf_rate = [0.0 for i in range(len(global_keywords))]
         for i in xrange(len(global_keywords)):
             if global_keywords[i][0] in self.tfidf_result:
                 # self.g_tfidf_rate[i] = self.tfidf_result[global_keywords[i]]

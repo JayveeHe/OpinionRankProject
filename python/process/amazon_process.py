@@ -50,6 +50,7 @@ def train_rf(train_vec, train_label):
     # rfrclf.fit(train_vec, train_label)
     # print rfrclf.feature_importances_
     trfclf = RFC(n_estimators=1001)
+    train_vec = np.array(train_vec)
     trfclf.fit(train_vec, train_label)
     # print rfclf.feature_importances_
     return trfclf
@@ -457,26 +458,26 @@ def train_models(train_start, train_end):
 if __name__ == '__main__':
     # 2016.5.29 测试lexical feature的分类效果
     train_veclist, train_sent_list, train_label_list, train_token_list, train_node_list, _ = amazon_preprocess(start=0,
-                                                                                                               end=50)
+                                                                                                               end=5)
     #
-    print 'start lda training'
-    tfidf = models.TfidfModel(train_token_list)
-    corpus_tfidf = tfidf[train_token_list]
-    lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=30,
-                                passes=10)
-    # # print lda_model.print_topics(100)
-    mfile = open('lda_model_100t.mod', 'w')
-    pickle.dump(lda_model, mfile)
+    # print 'start lda training'
+    # tfidf = models.TfidfModel(train_token_list)
+    # corpus_tfidf = tfidf[train_token_list]
+    # lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=30,
+    #                             passes=10)
+    # # # print lda_model.print_topics(100)
+    # mfile = open('lda_model_100t.mod', 'w')
+    # pickle.dump(lda_model, mfile)
     # #
     # # # train nb
     # # nbclf = train_nb(get_lda_vec(lda_model, train_token_list), train_label_list)
     # # mfile = open('nb_model.mod', 'w')
     # # pickle.dump(nbclf, mfile)
     # #
-    print 'start training rf'
-    rfclf = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
-    mfile = open('rf_model.mod', 'w')
-    pickle.dump(rfclf, mfile)
+    # print 'start training rf'
+    # rfclf = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
+    # mfile = open('rf_model.mod', 'w')
+    # pickle.dump(rfclf, mfile)
     print 'start training lexical rf'
     lexical_rfclf = train_rf(train_veclist, train_label_list)
     mfile = open('lexical_rf_model.mod', 'w')

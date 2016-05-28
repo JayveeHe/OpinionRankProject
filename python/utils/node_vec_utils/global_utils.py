@@ -51,16 +51,21 @@ class SentenceNodeManager(object):
         adj_rate_list = np.array(adj_rate_list)
         noun_rate_list = np.array(noun_rate_list)
         sent_len_list = np.array(sent_len_list)
-        std_verb_rate = verb_rate_list.std()
-        std_adj_rate = adj_rate_list.std()
-        std_noun_rate = noun_rate_list.std()
-        std_sent_len = sent_len_list.std()
-        mean_verb_rate = verb_rate_list.mean()
-        mean_adj_rate = adj_rate_list.mean()
-        mean_noun_rate = noun_rate_list.mean()
-        mean_sent_len = sent_len_list.mean()
+        std_verb_rate = verb_rate_list.std() if len(verb_rate_list) > 0 else 0.0
+        std_adj_rate = adj_rate_list.std() if len(adj_rate_list) > 0 else 0.0
+        std_noun_rate = noun_rate_list.std() if len(verb_rate_list) > 0 else 0.0
+        std_sent_len = sent_len_list.std() if len(verb_rate_list) > 0 else 0.0
+        mean_verb_rate = verb_rate_list.mean() if len(verb_rate_list) > 0 else 0.0
+        mean_adj_rate = adj_rate_list.mean() if len(adj_rate_list) > 0 else 0.0
+        mean_noun_rate = noun_rate_list.mean() if len(noun_rate_list) > 0 else 0.0
+        mean_sent_len = sent_len_list.mean() if len(verb_rate_list) > 0 else 0.0
         # gkeywords = []
-        gkeywords = self.get_global_keywords(topk=100, keywords_func=tfidf_func)
+        gkeywords = self.get_global_keywords(topk=50, keywords_func=tfidf_func)
+        # [{} for word, tfidf in gkeywords]
+        if len(gkeywords) < 50:
+            for i in range(len(gkeywords), 50):
+                gkeywords.append(('tmp', 0.1))
+
         # for gkey in self.get_global_keywords(10):
         #     gkeywords.append(gkey[0])
 
