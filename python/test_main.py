@@ -51,7 +51,7 @@ def handle_amazon_main():
     print 'done'
 
 
-def handle_amazon_by_review_range(low, high, limit=None):
+def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidAPP'):
     from utils.dao_utils.mongo_utils import get_db_inst
     mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
     lda_model = pickle.load(mfile)
@@ -59,8 +59,8 @@ def handle_amazon_by_review_range(low, high, limit=None):
     rfclf = pickle.load(mfile)
     # ttt = arrow.utcnow()
     # save_label = 'amazon'
-    meta_db_inst = get_db_inst('AmazonReviews', 'AndroidAPP_Meta')
-    db_result = get_db_inst('AmazonReviews', 'AndroidAPP_result')
+    meta_db_inst = get_db_inst('AmazonReviews', '%s_Meta' % category_name)
+    db_result = get_db_inst('AmazonReviews', '%s_result' % category_name)
     meta_result = meta_db_inst.find({"vote_reviews_count": {"$gte": low, "$lte": high}}, {"asin": 1})
     count = 0
     ttt = arrow.utcnow()

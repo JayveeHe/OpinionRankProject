@@ -3,6 +3,7 @@ from collections import defaultdict
 import json
 import math
 import os
+import seaborn as sns
 import sys
 
 projectpath = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -182,13 +183,22 @@ def plot_rank_error_cdf():
 
     sum_oprank_errors = 0.0
     sum_textrank_errors = 0.0
+    max_sum = 0.0
+    print 'calc max sum'
+    for x in xlist:
+        op_e = numpy.mean(xdict[x]['oprank_errors'])
+        t_e = numpy.mean(xdict[x]['textrank_errors'])
+        max_sum += max(op_e, t_e)
     for x in xlist:
         op_e = numpy.mean(xdict[x]['oprank_errors'])
         t_e = numpy.mean(xdict[x]['textrank_errors'])
         sum_oprank_errors += op_e
         sum_textrank_errors += t_e
-        oprank_ylist.append(sum_oprank_errors)
-        textrank_ylist.append(sum_textrank_errors)
+        # oprank_ylist.append(sum_oprank_errors)
+        # textrank_ylist.append(sum_textrank_errors)
+        oprank_ylist.append(sum_oprank_errors/max_sum)
+        textrank_ylist.append(sum_textrank_errors/max_sum)
+
         # log_oprank_ylist.append(math.log(max(op_e, 0.00000000001)))
         # log_textrank_ylist.append(math.log(max(t_e, 0.00000000001)))
         contrast_ylist.append(100 * (t_e - op_e) / max(t_e, 0.00000000001))
@@ -267,6 +277,6 @@ if __name__ == '__main__':
     # count_vote_dist()
     # cal_better_rate()
     # count_vote_dist()
-    # plot_rank_error_cdf()
+    plot_rank_error_cdf()
     # plot_errors_curves()
-    count_item_reviews_dist('VideoGames')
+    # count_item_reviews_dist('VideoGames')

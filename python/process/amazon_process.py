@@ -161,7 +161,7 @@ def amazon_preprocess(start=0, end=10, label_rate=0.65, min_vote=0):
 
 
 @timer
-def amazon_preproc_by_asin(asin, rfclf, lda_model, label_rate=0.65):
+def amazon_preproc_by_asin(asin, rfclf, lda_model, label_rate=0.65, category_name='AndroidAPP'):
     """
     根据asin直接分析某个商品下的评论
     :param asin:
@@ -170,7 +170,7 @@ def amazon_preproc_by_asin(asin, rfclf, lda_model, label_rate=0.65):
     # review_dicts = {}
     # asin_list = []
     manager_groups = {}
-    db_inst = get_db_inst('AmazonReviews', 'AndroidAPP')  # 计算每个APP下的评论
+    db_inst = get_db_inst('AmazonReviews', category_name)  # 计算每个APP下的评论
     a_reviews = []
     max_vote = 0  # 常量
     for find_item in db_inst.find({"asin": asin, 'total_vote': {"$gt": 0}}):

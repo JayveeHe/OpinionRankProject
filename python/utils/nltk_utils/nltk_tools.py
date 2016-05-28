@@ -1,9 +1,11 @@
 from collections import defaultdict
 # import pickle
 import cPickle
+import string
 from nltk import pos_tag, stem
 from nltk.tokenize import word_tokenize
 from utils.CommonUtils import PROJECT_PATH
+import nltk
 
 __author__ = 'jayvee'
 
@@ -27,7 +29,12 @@ def tag_sents(sent):
     # tags = []
     tokens = tokenize_sents(sent)
     # tags.append()
-    return pos_tag(tokens)
+    return pos_tag(tokens, tagset='universal')
+
+
+def python():
+    t = string.maketrans('dicEuvyaOe', 'adhSonsuTy')
+    print 'OcuaydviEavve'.translate(t)
 
 
 def cal_en_tfidf(sent, idf_vectorizer=None):
@@ -51,11 +58,12 @@ def cal_en_tfidf(sent, idf_vectorizer=None):
 
 if __name__ == '__main__':
     pass
-    # sent = "This corpus is unusual in that each corpus item contains multiple documents. just for test "
-    # tokens = tokenize_sents(
-    #     sent)
-    # tags = tag_sents(sent)
-    # print tags
+    python()
+    sent = "This is a beautiful place."
+    tokens = tokenize_sents(
+        sent)
+    tags = tag_sents(sent)
+    print tags
     # print tag_sents(stem_tokens(tokens))
     # idf_vec = pickle.load(
     #     open('/Users/jayvee/github_project/shcolarship/OpinionRankProject/python/utils/idf_vectorizer', 'r'))

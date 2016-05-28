@@ -7,7 +7,9 @@ __author__ = 'jayvee'
 import json
 import gzip
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+projectpath = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+print projectpath
+sys.path.append(projectpath)
 from utils.dao_utils.mongo_utils import get_db_inst
 from utils.CommonUtils import PROJECT_PATH
 
@@ -92,6 +94,5 @@ def handle_meta_gzfile(gz_name, db_name, collection_name):
 
 
 if __name__ == '__main__':
-
     # handle_meta_gzfile('meta_Apps_for_Android.json.gz','AmazonReviews','AndroidAPP_Meta')
     pass
