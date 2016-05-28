@@ -1,8 +1,16 @@
 # coding=utf-8
+import os
 import pickle
 from random import shuffle
 import math
+from gensim import models
 import numpy as np
+import sys
+
+cur_dir_path = os.path.dirname(os.path.abspath(__file__))
+project_path = os.path.dirname(cur_dir_path)
+sys.path.append(project_path)
+
 from utils.CommonUtils import PROJECT_PATH, timer
 from utils.dao_utils.mongo_utils import get_db_inst
 from utils.nltk_utils.nltk_tools import cal_en_tfidf, tag_sents
@@ -47,6 +55,10 @@ def train_rf(train_vec, train_label):
     return trfclf
 
 
+def train_lexical_classifier():
+    amazon_preprocess(start=0, end=10)
+
+
 def classify_sent(sent_node_list, clf, ldamod, labellist=None):
     """
     根据训练好的clf与ldamod，对输入的nodelist进行重要度分类
@@ -74,6 +86,42 @@ def classify_sent(sent_node_list, clf, ldamod, labellist=None):
             res.append((
                 0 if clf_result[0] > 0.5 else 1, sent_node_list[i].sent, clf_result[1], sent_node_list[i].extra[1],
                 sent_node_list[i].extra[2]))
+    return res
+
+
+def classify_sent_lexical(sent_node_list, lexical_clf, clf, ldamod, labellist=None):
+    """
+    根据训练好的clf与ldamod，对输入的nodelist进行重要度分类
+    :param sent_node_list:
+    :param clf:
+    :param labellist:
+    :return:
+    """
+    lexical_vecs = []
+    for node in sent_node_list:
+        lexical_vecs.append([i for i in node.get_vec().values()])
+    # lexical_vecs = get_lda_vec(ldamod, tlist)
+    tokenlist = []
+    for node in sent_node_list:
+        tokenlist.append(node.feature2token())
+    lda_vecs = get_lda_vec(ldamod, tokenlist)
+    res = []
+    for i in xrange(len(lexical_vecs)):
+        vec = lda_vecs[i]
+        vec = np.array(vec).reshape((1, -1))
+        lexical_vec = lexical_vecs[i]
+        lexical_vec = np.array(lexical_vec).reshape((1, -1))
+        clf_result = clf.predict_proba(vec)[0]
+        lexical_clf_result = lexical_clf.predict_proba(lexical_vec)[0]
+        if labellist:
+            res.append((
+                labellist[i], sent_node_list[i].sent, clf_result[1], sent_node_list[i].extra[1],
+                sent_node_list[i].extra[2], lexical_clf_result[1]))
+        else:
+            # clf_result = clf.predict_proba(vec)[0]
+            res.append((
+                0 if clf_result[0] > 0.5 else 1, sent_node_list[i].sent, clf_result[1], sent_node_list[i].extra[1],
+                sent_node_list[i].extra[2], lexical_clf_result[1]))
     return res
 
 
@@ -161,7 +209,7 @@ def amazon_preprocess(start=0, end=10, label_rate=0.65, min_vote=0):
 
 
 @timer
-def amazon_preproc_by_asin(asin, rfclf, lda_model, label_rate=0.65, category_name='AndroidAPP'):
+def amazon_preproc_by_asin(asin, rfclf, lda_model, lexical_rfclf, label_rate=0.65, category_name='AndroidAPP'):
     """
     根据asin直接分析某个商品下的评论
     :param asin:
@@ -207,16 +255,18 @@ def amazon_preproc_by_asin(asin, rfclf, lda_model, label_rate=0.65, category_nam
     # cal rank errors
     sum_oprank_errors = 0
     sum_textrank_errors = 0
+    sum_lexical_errors = 0
     item_rawlist = []
     # manager = manager_groups[asin]
     nodelist = snm.node_list
     try:
-        oprank_res = classify_sent(nodelist, rfclf, lda_model)
+        # oprank_res = classify_sent(nodelist, rfclf, lda_model)
+        lexical_res = classify_sent_lexical(nodelist, lexical_clf=lexical_rfclf, clf=rfclf, ldamod=lda_model)
         tmp_dict = {}
-        for i in oprank_res:
+        for i in lexical_res:
             tmp_dict[i[4]] = {'asin': asin, 'reviewerID': i[4], 'label': i[0], 'sent': i[1],
                               'opinion_rank_value': i[2],
-                              'vote_value': i[3]}
+                              'vote_value': i[3], 'lexical_value': i[5]}
             # raw_list.append('%s,%s,%s,%s,%s,%s' % (asin, i[4], i[0], i[1], i[2], i[3]))
         textrank_res = text_en_nodelist(nodelist)
         for i in textrank_res:
@@ -224,14 +274,18 @@ def amazon_preproc_by_asin(asin, rfclf, lda_model, label_rate=0.65, category_nam
             tmp_item['text_rank_value'] = i.weight
             item_rawlist.append(tmp_item)
             # raw_list.append(tmp_item)
-        oprank_errors, oprank_d = cal_oprank_error(oprank_res)
+
+        oprank_errors, oprank_d = cal_oprank_error(lexical_res)
         textrank_errors, textrank_d = cal_textrank_error(textrank_res)
+        lexical_errors, lexical_d = cal_lexical_error(lexical_res)
         # print info
         sum_oprank_errors += oprank_errors
+        sum_lexical_errors += lexical_errors
         sum_textrank_errors += textrank_errors
-        info = 'itemID: %s\ttotal reviews: %s\toprank_errors: %s\ttextrank_errors: %s\t' \
-               'sum_oprank_errors: %s\tsum_textrank_errors: %s' % (
-                   asin, len(nodelist), oprank_errors, textrank_errors, sum_oprank_errors, sum_textrank_errors)
+        info = 'itemID: %s\ttotal reviews: %s\toprank_errors: %s\tlexical_errors: %s\ttextrank_errors: %s\t' \
+               'sum_oprank_errors: %s\tsum_lexical_errors: %s\tsum_textrank_errors: %s' % (
+                   asin, len(nodelist), oprank_errors, lexical_errors, textrank_errors, sum_oprank_errors,
+                   sum_lexical_errors, sum_textrank_errors)
         # info_list.append(info)
         print info
         return info, item_rawlist
@@ -267,6 +321,35 @@ def cal_oprank_error(clf_res):
         rank_dict[item[0]]['value_rank'] = j
         rank_item = rank_dict[item[0]]
         errors += float(math.fabs(rank_item['clf_rank'] - rank_item['value_rank'])) / len(clf_res)
+    return errors, rank_dict
+
+
+def cal_lexical_error(lexical_clf_res):
+    """
+    计算opinion rank分类算法的rank结果与基于投票的ground truth的rank结果做比较
+    :param lexical_clf_res:
+    :return:
+    """
+    rank_dict = {}
+    ranklist = []
+    for _, _, clf_value, rank_value, review_id, lexical_value in lexical_clf_res:
+        # splits = rv_str.split(',')
+        # clf_value = eval(splits[2])
+        # rank_value = eval(splits[3])
+        # review_id = splits[4]
+        ranklist.append((review_id, lexical_value, rank_value))
+    # sort
+    clf_rank = sorted(ranklist, cmp=lambda x, y: -cmp(x[1], y[1]))
+    for i in xrange(len(clf_rank)):
+        item = clf_rank[i]
+        rank_dict[item[0]] = {'lexical_clf_rank': i}
+    value_rank = sorted(ranklist, cmp=lambda x, y: -cmp(x[2], y[2]))
+    errors = 0
+    for j in xrange(len(value_rank)):
+        item = value_rank[j]
+        rank_dict[item[0]]['value_rank'] = j
+        rank_item = rank_dict[item[0]]
+        errors += float(math.fabs(rank_item['lexical_clf_rank'] - rank_item['value_rank'])) / len(lexical_clf_res)
     return errors, rank_dict
 
 
@@ -372,26 +455,33 @@ def train_models(train_start, train_end):
 
 
 if __name__ == '__main__':
-    # _, train_sent_list, train_label_list, train_token_list, train_node_list = amazon_test(0, 20)
+    # 2016.5.29 测试lexical feature的分类效果
+    train_veclist, train_sent_list, train_label_list, train_token_list, train_node_list, _ = amazon_preprocess(start=0,
+                                                                                                               end=50)
     #
-    # print 'start lda training'
-    # tfidf = models.TfidfModel(train_token_list)
-    # corpus_tfidf = tfidf[train_token_list]
-    # lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=30,
-    #                             passes=10)
+    print 'start lda training'
+    tfidf = models.TfidfModel(train_token_list)
+    corpus_tfidf = tfidf[train_token_list]
+    lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=30,
+                                passes=10)
     # # print lda_model.print_topics(100)
-    # mfile = open('lda_model_100t.mod', 'w')
-    # pickle.dump(lda_model, mfile)
+    mfile = open('lda_model_100t.mod', 'w')
+    pickle.dump(lda_model, mfile)
     # #
     # # # train nb
     # # nbclf = train_nb(get_lda_vec(lda_model, train_token_list), train_label_list)
     # # mfile = open('nb_model.mod', 'w')
     # # pickle.dump(nbclf, mfile)
     # #
-    # rfclf = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
-    # mfile = open('rf_model.mod', 'w')
-    # pickle.dump(rfclf, mfile)
-    # print 'train done'
+    print 'start training rf'
+    rfclf = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
+    mfile = open('rf_model.mod', 'w')
+    pickle.dump(rfclf, mfile)
+    print 'start training lexical rf'
+    lexical_rfclf = train_rf(train_veclist, train_label_list)
+    mfile = open('lexical_rf_model.mod', 'w')
+    pickle.dump(lexical_rfclf, mfile)
+    print 'train done'
     pass
     # mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
     # ldamodel = pickle.load(mfile)

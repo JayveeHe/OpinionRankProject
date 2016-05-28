@@ -111,22 +111,32 @@ class SentenceNode(object):
                 g = (rate - mean_rate) / (mean_rate)
             return 1 / (1 + math.exp(-k * g))
 
-        mean_verb_rate = group_paras['mean_verb_rate'] # 暂时不用mean
+        def cal_sigmoid_std(rate, mean_rate, std_rate, k=2):
+            """
+            计算sigmoid，使用std归一化单个feature
+            """
+            if rate == mean_rate == 0 or std_rate == 0:
+                g = 0
+            else:
+                g = (rate - mean_rate) / (std_rate)
+            return 1 / (1 + math.exp(-k * g))
+
+        mean_verb_rate = group_paras['mean_verb_rate']  # 暂时不用mean
         std_verb_rate = group_paras['std_verb_rate']
         # self.g_verb_rate = self.verb_rate / mean_verb_rate
-        self.g_verb_rate = cal_sigmoid(self.verb_rate, std_verb_rate)
+        self.g_verb_rate = cal_sigmoid_std(self.verb_rate, mean_verb_rate, std_verb_rate)
         mean_noun_rate = group_paras['mean_noun_rate']
         std_noun_rate = group_paras['std_noun_rate']
         # self.g_noun_rate = self.noun_rate / mean_noun_rate
-        self.g_noun_rate = cal_sigmoid(self.noun_rate, std_noun_rate)
+        self.g_noun_rate = cal_sigmoid_std(self.noun_rate, mean_noun_rate, std_noun_rate)
         mean_adj_rate = group_paras['mean_adj_rate']
         std_adj_rate = group_paras['std_adj_rate']
         # self.g_adj_rate = self.adj_rate / mean_adj_rate
-        self.g_adj_rate = cal_sigmoid(self.adj_rate, std_adj_rate)
+        self.g_adj_rate = cal_sigmoid_std(self.adj_rate, mean_adj_rate, std_adj_rate)
         # sent len
         mean_sent_len = group_paras['mean_sent_len']
         std_sent_len = group_paras['std_sent_len']
-        self.g_sent_len = cal_sigmoid(self.sent_len, std_sent_len)
+        self.g_sent_len = cal_sigmoid_std(self.sent_len, mean_sent_len, std_sent_len)
         # tfidf vec
         global_keywords = group_paras['global_keywords']
         self.g_tfidf_rate = [0.0] * len(global_keywords)

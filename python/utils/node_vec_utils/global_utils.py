@@ -28,11 +28,11 @@ class SentenceNodeManager(object):
         获取句子群的群属性值
         :return:
         """
-        mean_verb_rate = 0
-        mean_adj_rate = 0
-        mean_noun_rate = 0
-        mean_sent_len = 0
-        list_size = len(self.node_list)
+        # mean_verb_rate = 0
+        # mean_adj_rate = 0
+        # mean_noun_rate = 0
+        # mean_sent_len = 0
+        # list_size = len(self.node_list)
         verb_rate_list = []
         adj_rate_list = []
         noun_rate_list = []
@@ -47,18 +47,26 @@ class SentenceNodeManager(object):
             # mean_adj_rate += vec_value['adj_rate'] / list_size
             # mean_noun_rate += vec_value['noun_rate'] / list_size
             # mean_sent_len += vec_value['sent_len'] / list_size
-        std_verb_rate = np.array(verb_rate_list).std()
-        std_adj_rate = np.array(adj_rate_list).std()
-        std_noun_rate = np.array(noun_rate_list).std()
-        std_sent_len = np.array(sent_len_list).std()
-        gkeywords = []
+        verb_rate_list = np.array(verb_rate_list)
+        adj_rate_list = np.array(adj_rate_list)
+        noun_rate_list = np.array(noun_rate_list)
+        sent_len_list = np.array(sent_len_list)
+        std_verb_rate = verb_rate_list.std()
+        std_adj_rate = adj_rate_list.std()
+        std_noun_rate = noun_rate_list.std()
+        std_sent_len = sent_len_list.std()
+        mean_verb_rate = verb_rate_list.mean()
+        mean_adj_rate = adj_rate_list.mean()
+        mean_noun_rate = noun_rate_list.mean()
+        mean_sent_len = sent_len_list.mean()
+        # gkeywords = []
         gkeywords = self.get_global_keywords(topk=100, keywords_func=tfidf_func)
         # for gkey in self.get_global_keywords(10):
         #     gkeywords.append(gkey[0])
 
         return {
-            # 'mean_verb_rate': mean_verb_rate, 'mean_adj_rate': mean_adj_rate,
-            # 'mean_noun_rate': mean_noun_rate, 'mean_sent_len': mean_sent_len,
+            'mean_verb_rate': mean_verb_rate, 'mean_adj_rate': mean_adj_rate,
+            'mean_noun_rate': mean_noun_rate, 'mean_sent_len': mean_sent_len,
             'std_verb_rate': std_verb_rate, 'std_adj_rate': std_adj_rate,
             'std_noun_rate': std_noun_rate, 'std_sent_len': std_sent_len,
             'global_keywords': gkeywords}
@@ -74,7 +82,7 @@ class SentenceNodeManager(object):
             vec_dict = node.get_vec()
             vec_list.append(
                 [vec_dict['g_verb_rate'], vec_dict['g_noun_rate'],
-                 vec_dict['g_adj_rate']] + vec_dict['g_tfidf_rate'])
+                 vec_dict['g_adj_rate'], vec_dict['g_sent_len']] + vec_dict['g_tfidf_rate'])
         return vec_list
 
     def get_sent_list(self):

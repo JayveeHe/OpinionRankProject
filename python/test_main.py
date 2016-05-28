@@ -55,8 +55,10 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
     from utils.dao_utils.mongo_utils import get_db_inst
     mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
     lda_model = pickle.load(mfile)
-    mfile = open('%s/process/models/rf_model_100t.mod' % PROJECT_PATH, 'r')
+    mfile = open('%s/process/models/rf_model.mod' % PROJECT_PATH, 'r')
     rfclf = pickle.load(mfile)
+    mfile = open('%s/process/models/lexical_rf_model.mod' % PROJECT_PATH, 'r')
+    lexical_rfclf = pickle.load(mfile)
     # ttt = arrow.utcnow()
     # save_label = 'amazon'
     meta_db_inst = get_db_inst('AmazonReviews', '%s_Meta' % category_name)
@@ -78,7 +80,7 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
         limit = min(limit, len(asin_list))  # maybe not necessary
         asin_list = asin_list[:limit]
     for asin in asin_list:
-        info, raw_list = amazon_preproc_by_asin(asin, rfclf=rfclf, lda_model=lda_model)
+        info, raw_list = amazon_preproc_by_asin(asin, rfclf=rfclf, lda_model=lda_model, lexical_rfclf=lexical_rfclf)
         if raw_list is None or info is None:
             continue
         for raw in raw_list:
