@@ -258,7 +258,7 @@ def amazon_preproc_by_asin(asin, rfclf, lda_model, lexical_rfclf, label_rate=0.6
     # nodelist = []
     # group_nodelist = []
     print 'start normalizing vecs'
-    snm.normalize_all_sentnodes(tfidf_func=tag_sents)
+    snm.normalize_all_sentnodes(tfidf_func=cal_en_tfidf)
     print 'end normalizing vecs'
     # cal rank errors
     sum_oprank_errors = 0

@@ -154,20 +154,22 @@ def plot_errors_curves():
     plt.show()
 
 
-def plot_rank_error_cdf():
+def plot_rank_error_cdf(category_name='AndroidAPP'):
     """
     绘制errorsCDF的对比图
     :return:
     """
     import pymongo
     import numpy
-    db_result = get_db_inst('AmazonReviews', 'AndroidAPP_result')
+    db_result = get_db_inst('AmazonReviews', '%s_result_new' % category_name)
     find_result = db_result.find({"total_reviews": {"$gt": 0, '$lt': 2000}}).sort('total_reviews', pymongo.ASCENDING)
     xlist = []
     xdict = {}
     oprank_ylist = []
     textrank_ylist = []
+    lexical_rank_ylist = []
     contrast_ylist = []
+    contrast_lex_ylist = []
     log_oprank_ylist = []
     log_textrank_ylist = []
     count = 0
@@ -175,34 +177,41 @@ def plot_rank_error_cdf():
         if xdict.get(item['total_reviews']):
             xdict[item['total_reviews']]['oprank_errors'].append(item['oprank_errors'])
             xdict[item['total_reviews']]['textrank_errors'].append(item['textrank_errors'])
+            xdict[item['total_reviews']]['lexical_errors'].append(item['lexical_errors'])
         else:
             xdict[item['total_reviews']] = {'oprank_errors': [item['oprank_errors']],
-                                            'textrank_errors': [item['textrank_errors']]}
+                                            'textrank_errors': [item['textrank_errors']],
+                                            'lexical_errors': [item['lexical_errors']]}
         count += 1
         if item['total_reviews'] not in xlist:
             xlist.append(item['total_reviews'])
 
     sum_oprank_errors = 0.0
     sum_textrank_errors = 0.0
+    sum_lexical_rank_errors = 0.0
     max_sum = 0.0
     print 'calc max sum'
     for x in xlist:
         op_e = numpy.mean(xdict[x]['oprank_errors'])
         t_e = numpy.mean(xdict[x]['textrank_errors'])
-        max_sum += max(op_e, t_e)
+        lex_e = numpy.mean(xdict[x]['lexical_errors'])
+        max_sum += max(op_e, t_e, lex_e)
     for x in xlist:
         op_e = numpy.mean(xdict[x]['oprank_errors'])
         t_e = numpy.mean(xdict[x]['textrank_errors'])
+        lex_e = numpy.mean(xdict[x]['lexical_errors'])
         sum_oprank_errors += op_e
         sum_textrank_errors += t_e
+        sum_lexical_rank_errors += lex_e
         # oprank_ylist.append(sum_oprank_errors)
         # textrank_ylist.append(sum_textrank_errors)
         oprank_ylist.append(sum_oprank_errors / max_sum)
         textrank_ylist.append(sum_textrank_errors / max_sum)
-
+        lexical_rank_ylist.append(sum_lexical_rank_errors / max_sum)
         # log_oprank_ylist.append(math.log(max(op_e, 0.00000000001)))
         # log_textrank_ylist.append(math.log(max(t_e, 0.00000000001)))
         contrast_ylist.append(100 * (t_e - op_e) / max(t_e, 0.00000000001))
+        contrast_lex_ylist.append(100 * (t_e - lex_e) / max(t_e, 0.00000000001))
 
     print count
     print 'mean contrast: %s' % numpy.mean(contrast_ylist)
@@ -214,21 +223,29 @@ def plot_rank_error_cdf():
     fig = plt.figure('contrast fig')
     sb1 = plt.subplot(1, 1, 1)
     plt.xlim(0, xmax + dx)
-    plt.xlabel('total_reviews',fontsize=16)
-    plt.ylabel('rank_errors(CDF)',fontsize=16)
-    plt.title('CDF of Rank Error between OpinionRank and TextRank',fontsize=18)
+    plt.xlabel('total_reviews', fontsize=16)
+    plt.ylabel('rank_errors(CDF)', fontsize=16)
+    plt.title('CDF of Rank Error between OpinionRank and TextRank', fontsize=18)
     plt.plot(xlist, oprank_ylist, label='oprank_errors', color='blue', linestyle="-")
     plt.plot(xlist, textrank_ylist, label='textrank_errors', color='green', linestyle="-")
+    plt.plot(xlist, lexical_rank_ylist, label='lexical_oprank_errors', color='red', linestyle="-")
     plt.legend(loc='upper left', prop={'size': 18})
-    '''
-    plt.subplot(2, 1, 2, sharex=sb1)
+    plt.show()
+    # '''
+    plt.subplot(1, 1, 1, sharex=sb1)
     plt.xlabel('total_reviews')
     plt.ylabel('rank_error reduction(%)')
     plt.title('Contrast of Rank Error Reduction between OpinionRank and TextRank')
-    plt.bar(xlist, contrast_ylist, label='textrank_errors', color='green')
+    plt.bar(xlist, contrast_ylist, label='reduction_rate', color='green')
     plt.legend(loc='upper right')
-    '''
-
+    plt.show()
+    # '''
+    plt.subplot(1, 1, 1, sharex=sb1)
+    plt.xlabel('total_reviews')
+    plt.ylabel('rank_error reduction(%)')
+    plt.title('Contrast of Rank Error Reduction between Lexical-OpinionRank and TextRank')
+    plt.bar(xlist, contrast_lex_ylist, label='reduction_rate', color='green')
+    plt.legend(loc='upper right')
     plt.show()
 
 
@@ -260,26 +277,27 @@ def handle_amazon_result(fin_path):
         print 'handled!'
 
 
-def cal_better_rate():
+def cal_better_rate(category_name='AndroidAPP', a='oprank_errors', b='textrank_errors'):
     """
     计算opinion rank比textrank好的情况占比
     :return:
     """
-    db_result = get_db_inst('AmazonReviews', 'AndroidAPP_result')
+    db_result = get_db_inst('AmazonReviews', '%s_result_new' % category_name)
     find_result = db_result.find({"total_reviews": {"$gt": 0, '$lt': 2000}})
     count = find_result.count()
     better_count = 0.0
     for item in find_result:
-        if item['oprank_errors'] <= item['textrank_errors']:
+        if item[a] <= item[b]:
             better_count += 1.0
-    print 'better rate: %s' % (better_count / count)
+    print 'better rate: %s (%s/%s)' % ((better_count / count), int(better_count), count)
     return better_count / count
 
 
 if __name__ == '__main__':
     # count_vote_dist()
-    # cal_better_rate()
+
+    cal_better_rate(category_name="AndroidAPP", a='oprank_errors', b='lexical_errors')
     # count_vote_dist()
-    # plot_rank_error_cdf()
+    plot_rank_error_cdf(category_name="AndroidAPP")
     # plot_errors_curves()
-    count_item_reviews_dist('VideoGames')
+    # count_item_reviews_dist('VideoGames')
