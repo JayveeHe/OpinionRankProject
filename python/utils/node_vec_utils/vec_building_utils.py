@@ -124,7 +124,7 @@ class SentenceNode(object):
             if rate == mean_rate == 0:
                 g = 0
             else:
-                g = (rate - mean_rate) / (rate+mean_rate)
+                g = (rate - mean_rate) / (rate + mean_rate)
             return 1 / (1 + math.exp(-k * g))
 
         def cal_sigmoid_std(rate, mean_rate, std_rate, k=2):
@@ -186,23 +186,28 @@ class SentenceNode(object):
         sent feature转lda的输入token
         :return:
         """
-        vec = self.get_vec()
+        vec_dict = self.get_vec()
+        vec = [vec_dict['g_verb_rate'], vec_dict['g_noun_rate'],
+               vec_dict['g_adj_rate'], vec_dict['g_sent_len'], vec_dict['g_adv_rate']] + vec_dict['g_tfidf_rate']
         tokens = []
         i = 0
         RANGE = int(1 / interval)
-        for key in vec.keys():
-            # if key.__contains__('g'):
-            #     rate = vec.get(key)
-            #     tokens.append((i * RANGE + int(rate / interval), 1.0))
-            #     i += 1
-            rate = vec.get(key)
-            if key == 'sent_len':
-                continue
-            if isinstance(rate, list):
-                for c in rate:
-                    tokens.append((i * RANGE + int(c / interval), 1.0))
-                    i += 1
-            else:
-                tokens.append((i * RANGE + int(rate / interval), 1.0))
-                i += 1
+        for i in xrange(len(vec)):
+            rate = vec[i]
+            tokens.append((i * RANGE + int(rate / interval), 1.0))
+        # for key in vec.keys():
+        #     # if key.__contains__('g'):
+        #     #     rate = vec.get(key)
+        #     #     tokens.append((i * RANGE + int(rate / interval), 1.0))
+        #     #     i += 1
+        #     rate = vec.get(key)
+        #     if key == 'sent_len' or 'g' in key:
+        #         continue
+        #     if isinstance(rate, list):
+        #         for c in rate:
+        #             tokens.append((i * RANGE + int(c / interval), 1.0))
+        #             i += 1
+        #     else:
+        #         tokens.append((i * RANGE + int(rate / interval), 1.0))
+        #         i += 1
         return tokens

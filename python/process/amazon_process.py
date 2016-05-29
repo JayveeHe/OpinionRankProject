@@ -53,7 +53,7 @@ def train_rf(train_vec, train_label):
     trfclf = RFC(n_estimators=1001)
     train_vec = np.array(train_vec)
     trfclf.fit(train_vec, train_label)
-    cv_value = cross_val_score(trfclf, train_vec, train_label, cv=10, scoring='average_precision').mean()
+    cv_value = cross_val_score(trfclf, train_vec, train_label, cv=10, scoring='accuracy').mean()
     # print cv_value
     # print rfclf.feature_importances_
     return trfclf, cv_value
@@ -464,8 +464,8 @@ def train_models(train_start, train_end):
     print 'start lda training'
     tfidf = models.TfidfModel(train_token_list)
     corpus_tfidf = tfidf[train_token_list]
-    lda_model = models.LdaModel(corpus_tfidf, num_topics=200, iterations=30,
-                                passes=5)
+    lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=50,
+                                passes=10)
     mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'w')
     pickle.dump(lda_model, mfile)
     print 'start training rf'
