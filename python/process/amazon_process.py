@@ -100,7 +100,11 @@ def classify_sent_lexical(sent_node_list, lexical_clf, clf, ldamod, labellist=No
     """
     lexical_vecs = []
     for node in sent_node_list:
-        lexical_vecs.append([i for i in node.get_vec().values()])
+        vec_dict = node.get_vec()
+        lexical_vecs.append(
+            [vec_dict['g_verb_rate'], vec_dict['g_noun_rate'],
+             vec_dict['g_adj_rate'], vec_dict['g_sent_len']] + vec_dict['g_tfidf_rate'])
+        # lexical_vecs.append([i for i in node.get_vec().values()])
     # lexical_vecs = get_lda_vec(ldamod, tlist)
     tokenlist = []
     for node in sent_node_list:
@@ -304,7 +308,7 @@ def cal_oprank_error(clf_res):
     """
     rank_dict = {}
     ranklist = []
-    for _, _, clf_value, rank_value, review_id in clf_res:
+    for _, _, clf_value, rank_value, review_id, lexical_value in clf_res:
         # splits = rv_str.split(',')
         # clf_value = eval(splits[2])
         # rank_value = eval(splits[3])
@@ -439,50 +443,50 @@ def amazon_main(test_start, test_end, lda_model, rfclf):
 
 def train_models(train_start, train_end):
     from gensim import models
-    _, train_sent_list, train_label_list, train_token_list, train_node_list, _ = amazon_preprocess(train_start,
-                                                                                                   train_end)
+    train_veclist, train_sent_list, train_label_list, train_token_list, train_node_list, _ = amazon_preprocess(
+        train_start,
+        train_end)
+    # print 'start lda training'
+    # tfidf = models.TfidfModel(train_token_list)
+    # corpus_tfidf = tfidf[train_token_list]
+    # lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=30,
+    #                             passes=10)
+    # # print lda_model.print_topics(100)
+    # mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'w')
+    # pickle.dump(lda_model, mfile)
+    # rfclf = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
+    # mfile = open('%s/process/models/rf_model_100t.mod' % PROJECT_PATH, 'w')
+    # pickle.dump(rfclf, mfile)
+
     print 'start lda training'
     tfidf = models.TfidfModel(train_token_list)
     corpus_tfidf = tfidf[train_token_list]
     lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=30,
                                 passes=10)
-    # print lda_model.print_topics(100)
     mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'w')
     pickle.dump(lda_model, mfile)
+    print 'start training rf'
     rfclf = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
-    mfile = open('%s/process/models/rf_model_100t.mod' % PROJECT_PATH, 'w')
+    mfile = open('%s/process/models/rf_model.mod' % PROJECT_PATH, 'w')
     pickle.dump(rfclf, mfile)
+    print 'start training lexical rf'
+    lexical_rfclf = train_rf(train_veclist, train_label_list)
+    mfile = open('%s/process/models/lexical_rf_model.mod' % PROJECT_PATH, 'w')
+    pickle.dump(lexical_rfclf, mfile)
     print 'train done'
 
 
 if __name__ == '__main__':
     # 2016.5.29 测试lexical feature的分类效果
-    train_veclist, train_sent_list, train_label_list, train_token_list, train_node_list, _ = amazon_preprocess(start=0,
-                                                                                                               end=500)
+    # train_veclist, train_sent_list, train_label_list, train_token_list, train_node_list, _ = amazon_preprocess(start=0,
+    #                                                                                                            end=500)
     # # # train nb
     # # nbclf = train_nb(get_lda_vec(lda_model, train_token_list), train_label_list)
     # # mfile = open('nb_model.mod', 'w')
     # # pickle.dump(nbclf, mfile)
     #
-    print 'start lda training'
-    tfidf = models.TfidfModel(train_token_list)
-    corpus_tfidf = tfidf[train_token_list]
-    lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=30,
-                                passes=10)
-    # # print lda_model.print_topics(100)
-    mfile = open('lda_model_100t.mod', 'w')
-    pickle.dump(lda_model, mfile)
-    #
-    #
-    print 'start training rf'
-    rfclf = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
-    mfile = open('rf_model.mod', 'w')
-    pickle.dump(rfclf, mfile)
-    print 'start training lexical rf'
-    lexical_rfclf = train_rf(train_veclist, train_label_list)
-    mfile = open('lexical_rf_model.mod', 'w')
-    pickle.dump(lexical_rfclf, mfile)
-    print 'train done'
+    train_models(0, 10)
+
     pass
     # mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
     # ldamodel = pickle.load(mfile)
