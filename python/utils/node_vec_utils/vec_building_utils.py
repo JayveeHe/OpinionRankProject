@@ -28,9 +28,11 @@ class SentenceNode(object):
         self.noun_rate = 0.0
         self.adj_rate = 0.0
         self.verb_rate = 0.0
+        self.adv_rate = 0.0
         self.g_noun_rate = 0.0  # group related feature
         self.g_adj_rate = 0.0
         self.g_verb_rate = 0.0
+        self.g_adv_rate = 0.0
         self.g_tfidf_rate = []
         self.sent_len = len(sent)
         self.g_sent_len = 0.0
@@ -79,6 +81,19 @@ class SentenceNode(object):
                     tmp_count += 1.0
             return tmp_count / len(self.pos_result)
 
+        def cal_adv_rate():
+            """
+            计算介词所占的比例
+            :return:
+            """
+            verb_count = 0.0
+            if len(self.pos_result) == 0:
+                return 0.0
+            for pos in self.pos_result:
+                if pos[1] in ['ADV']:
+                    verb_count += 1.0
+            return verb_count / len(self.pos_result)
+
         # def cal_pos_rate():
 
 
@@ -93,6 +108,7 @@ class SentenceNode(object):
         self.verb_rate = cal_verb_rate()
         self.noun_rate = cal_noun_rate()
         self.adj_rate = cal_adj_rate()
+        self.adv_rate = cal_adv_rate()
 
     def norm_vec(self, group_paras):
         """
@@ -133,6 +149,10 @@ class SentenceNode(object):
         std_adj_rate = group_paras['std_adj_rate']
         # self.g_adj_rate = self.adj_rate / mean_adj_rate
         self.g_adj_rate = cal_sigmoid_std(self.adj_rate, mean_adj_rate, std_adj_rate)
+        mean_adv_rate = group_paras['mean_adv_rate']
+        std_adv_rate = group_paras['std_adv_rate']
+        # self.g_adj_rate = self.adj_rate / mean_adj_rate
+        self.g_adv_rate = cal_sigmoid_std(self.adv_rate, mean_adv_rate, std_adv_rate)
         # sent len
         mean_sent_len = group_paras['mean_sent_len']
         std_sent_len = group_paras['std_sent_len']
@@ -156,7 +176,9 @@ class SentenceNode(object):
         :return: a dict
         """
         return {'verb_rate': self.verb_rate, 'noun_rate': self.noun_rate, 'adj_rate': self.adj_rate,
+                'adv_rate': self.adv_rate,
                 'g_verb_rate': self.g_verb_rate, 'g_noun_rate': self.g_noun_rate, 'g_adj_rate': self.g_adj_rate,
+                'g_adv_rate': self.g_adv_rate,
                 'g_tfidf_rate': self.g_tfidf_rate, 'sent_len': self.sent_len, 'g_sent_len': self.g_sent_len}
 
     def feature2token(self, interval=0.001):

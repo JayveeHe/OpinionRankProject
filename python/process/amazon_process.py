@@ -53,7 +53,7 @@ def train_rf(train_vec, train_label):
     trfclf = RFC(n_estimators=1001)
     train_vec = np.array(train_vec)
     trfclf.fit(train_vec, train_label)
-    cv_value = cross_val_score(trfclf, train_vec, train_label, cv=10, scoring='f1').mean()
+    cv_value = cross_val_score(trfclf, train_vec, train_label, cv=10, scoring='average_precision').mean()
     # print cv_value
     # print rfclf.feature_importances_
     return trfclf, cv_value
@@ -106,7 +106,7 @@ def classify_sent_lexical(sent_node_list, lexical_clf, clf, ldamod, labellist=No
         vec_dict = node.get_vec()
         lexical_vecs.append(
             [vec_dict['g_verb_rate'], vec_dict['g_noun_rate'],
-             vec_dict['g_adj_rate'], vec_dict['g_sent_len']] + vec_dict['g_tfidf_rate'])
+             vec_dict['g_adj_rate'], vec_dict['g_sent_len'], vec_dict['g_adv_rate']] + vec_dict['g_tfidf_rate'])
         # lexical_vecs.append([i for i in node.get_vec().values()])
     # lexical_vecs = get_lda_vec(ldamod, tlist)
     tokenlist = []
@@ -464,13 +464,13 @@ def train_models(train_start, train_end):
     print 'start lda training'
     tfidf = models.TfidfModel(train_token_list)
     corpus_tfidf = tfidf[train_token_list]
-    lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=30,
-                                passes=10)
+    lda_model = models.LdaModel(corpus_tfidf, num_topics=200, iterations=30,
+                                passes=5)
     mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'w')
     pickle.dump(lda_model, mfile)
     print 'start training rf'
     rfclf, rfcv = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
-    print 'non lexical rf cross-validation=%s' % rfcv
+    print 'latent level rf cross-validation=%s' % rfcv
     mfile = open('%s/process/models/rf_model.mod' % PROJECT_PATH, 'w')
     pickle.dump(rfclf, mfile)
     print 'start training lexical rf'
@@ -490,7 +490,7 @@ if __name__ == '__main__':
     # # mfile = open('nb_model.mod', 'w')
     # # pickle.dump(nbclf, mfile)
     #
-    train_models(0, 10)
+    train_models(0, 50)
 
     pass
     # mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
