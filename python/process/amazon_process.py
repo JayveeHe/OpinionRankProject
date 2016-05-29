@@ -46,14 +46,17 @@ def train_nb(train_vec, train_label):
 
 def train_rf(train_vec, train_label):
     from sklearn.ensemble.forest import RandomForestClassifier as RFC
+    from sklearn.cross_validation import cross_val_score
     # rfrclf = RFR(n_estimators=1001)
     # rfrclf.fit(train_vec, train_label)
     # print rfrclf.feature_importances_
     trfclf = RFC(n_estimators=1001)
     train_vec = np.array(train_vec)
     trfclf.fit(train_vec, train_label)
+    cv_value = cross_val_score(trfclf, train_vec, train_label, cv=10, scoring='f1').mean()
+    # print cv_value
     # print rfclf.feature_importances_
-    return trfclf
+    return trfclf, cv_value
 
 
 def train_lexical_classifier():
@@ -466,11 +469,13 @@ def train_models(train_start, train_end):
     mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'w')
     pickle.dump(lda_model, mfile)
     print 'start training rf'
-    rfclf = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
+    rfclf, rfcv = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
+    print 'non lexical rf cross-validation=%s' % rfcv
     mfile = open('%s/process/models/rf_model.mod' % PROJECT_PATH, 'w')
     pickle.dump(rfclf, mfile)
     print 'start training lexical rf'
-    lexical_rfclf = train_rf(train_veclist, train_label_list)
+    lexical_rfclf, lexical_cv = train_rf(train_veclist, train_label_list)
+    print 'lexical rf cross-validation=%s' % lexical_cv
     mfile = open('%s/process/models/lexical_rf_model.mod' % PROJECT_PATH, 'w')
     pickle.dump(lexical_rfclf, mfile)
     print 'train done'
