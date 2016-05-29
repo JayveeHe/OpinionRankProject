@@ -490,7 +490,7 @@ if __name__ == '__main__':
     # # mfile = open('nb_model.mod', 'w')
     # # pickle.dump(nbclf, mfile)
     #
-    train_models(0, 30)
+    train_models(0, 2000)
 
     pass
     # mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')

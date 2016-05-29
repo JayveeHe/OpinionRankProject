@@ -280,6 +280,6 @@ if __name__ == '__main__':
     # count_vote_dist()
     # cal_better_rate()
     # count_vote_dist()
-    plot_rank_error_cdf()
+    # plot_rank_error_cdf()
     # plot_errors_curves()
-    # count_item_reviews_dist('VideoGames')
+    count_item_reviews_dist('VideoGames')

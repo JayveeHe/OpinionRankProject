@@ -83,7 +83,7 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
         asin_list = asin_list[:limit]
     print 'start analyzing'
     for asin in asin_list:
-        info, raw_list = amazon_preproc_by_asin(asin, rfclf=rfclf, lda_model=lda_model, lexical_rfclf=lexical_rfclf)
+        info, raw_list = amazon_preproc_by_asin(asin, rfclf=rfclf, lda_model=lda_model, lexical_rfclf=lexical_rfclf,category_name='VideoGames')
         if raw_list is None or info is None:
             continue
         for raw in raw_list:
@@ -108,5 +108,5 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
 
 
 if __name__ == '__main__':
-    handle_amazon_by_review_range(50, 100, limit=30)
+    handle_amazon_by_review_range(10,150, category_name='VideoGames', limit=50)
     # handle_result_main()
