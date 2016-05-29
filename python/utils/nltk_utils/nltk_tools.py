@@ -4,17 +4,18 @@ import cPickle
 import string
 from nltk import pos_tag, stem
 from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
 from utils.CommonUtils import PROJECT_PATH
-import nltk
 
 __author__ = 'jayvee'
 
 idf_vectorizer = None
 
+
 def tokenize_sents(sent):
     tokens = []
     for token in word_tokenize(sent):
-        tokens.append(token)
+        tokens.append(token.lower())
     return tokens
 
 
@@ -23,6 +24,12 @@ def stem_tokens(tokens):
     res = []
     for token in tokens:
         res.append(stemmer.stem(token))
+    return res
+
+
+def filter_stopwords(tokens):
+    english_stopwords = stopwords.words('english')
+    res = filter(lambda x: x not in english_stopwords, tokens)
     return res
 
 
@@ -44,14 +51,15 @@ def cal_en_tfidf(sent):
         print 'init idf'
         idf_vectorizer = cPickle.load(
             open('%s/utils/idf_vectorizer' % PROJECT_PATH, 'r'))
-    tokens = tokenize_sents(sent)
+    en_tokens = tokenize_sents(sent)
+    en_tokens = filter_stopwords(en_tokens)
     idf = idf_vectorizer.idf_
     freq_dict = defaultdict(int)
     res = []
-    for token in tokens:
+    for token in en_tokens:
         t = token.lower()
         freq_dict[t] += 1
-    for token in tokens:
+    for token in en_tokens:
         t = token.lower()
         tid = idf_vectorizer.vocabulary_.get(t)
         if tid:
@@ -70,4 +78,5 @@ if __name__ == '__main__':
     # print tag_sents(stem_tokens(tokens))
     # idf_vec = pickle.load(
     #     open('/Users/jayvee/github_project/shcolarship/OpinionRankProject/python/utils/idf_vectorizer', 'r'))
-    # print cal_tfidf(sent, idf_vec)
+    print cal_en_tfidf(sent)
+    filter_stopwords(tokens)
