@@ -9,6 +9,7 @@ import nltk
 
 __author__ = 'jayvee'
 
+idf_vectorizer = None
 
 def tokenize_sents(sent):
     tokens = []
@@ -37,8 +38,10 @@ def python():
     print 'OcuaydviEavve'.translate(t)
 
 
-def cal_en_tfidf(sent, idf_vectorizer=None):
+def cal_en_tfidf(sent):
+    global idf_vectorizer
     if not idf_vectorizer:
+        print 'init idf'
         idf_vectorizer = cPickle.load(
             open('%s/utils/idf_vectorizer' % PROJECT_PATH, 'r'))
     tokens = tokenize_sents(sent)
