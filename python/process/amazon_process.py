@@ -268,7 +268,7 @@ def amazon_preproc_by_asin(asin, rfclf, lda_model, lexical_rfclf, label_rate=0.6
     # manager = manager_groups[asin]
     nodelist = snm.node_list
     try:
-        # oprank_res = classify_sent(nodelist, rfclf, lda_model)
+        oprank_res = classify_sent(nodelist, rfclf, lda_model)
         lexical_res = classify_sent_lexical(nodelist, lexical_clf=lexical_rfclf, clf=rfclf, ldamod=lda_model)
         tmp_dict = {}
         for i in lexical_res:
@@ -490,7 +490,7 @@ if __name__ == '__main__':
     # # mfile = open('nb_model.mod', 'w')
     # # pickle.dump(nbclf, mfile)
     #
-    train_models(0, 50)
+    train_models(0, 30)
 
     pass
     # mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')

@@ -124,7 +124,7 @@ class SentenceNode(object):
             if rate == mean_rate == 0:
                 g = 0
             else:
-                g = (rate - mean_rate) / (mean_rate)
+                g = (rate - mean_rate) / (rate+mean_rate)
             return 1 / (1 + math.exp(-k * g))
 
         def cal_sigmoid_std(rate, mean_rate, std_rate, k=2):

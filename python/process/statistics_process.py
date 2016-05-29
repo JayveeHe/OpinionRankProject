@@ -135,7 +135,7 @@ def plot_errors_curves():
     xmax, xmin = max(xlist), min(xlist)
     dx = (xmax - xmin) * 0.1
     fig = plt.figure('contrast fig')
-    sb1 = plt.subplot(2, 1, 1)
+    sb1 = plt.subplot(1, 1, 1)
     plt.xlim(0, xmax + dx)
     plt.xlabel('total_reviews')
     plt.ylabel('rank_errors')
@@ -143,12 +143,13 @@ def plot_errors_curves():
     plt.plot(xlist, oprank_ylist, label='oprank_errors', color='blue', linestyle="-")
     plt.plot(xlist, textrank_ylist, label='textrank_errors', color='green', linestyle="-")
     plt.legend(loc='upper left')
-    plt.subplot(2, 1, 2, sharex=sb1)
-    plt.xlabel('total_reviews')
-    plt.ylabel('rank_error reduction(%)')
-    plt.title('Contrast of Rank Error Reduction between OpinionRank and TextRank')
-    plt.bar(xlist, contrast_ylist, label='textrank_errors', color='green')
-    plt.legend(loc='upper right')
+
+    # plt.subplot(2, 1, 2, sharex=sb1)
+    # plt.xlabel('total_reviews')
+    # plt.ylabel('rank_error reduction(%)')
+    # plt.title('Contrast of Rank Error Reduction between OpinionRank and TextRank')
+    # plt.bar(xlist, contrast_ylist, label='textrank_errors', color='green')
+    # plt.legend(loc='upper right')
 
     plt.show()
 
@@ -196,8 +197,8 @@ def plot_rank_error_cdf():
         sum_textrank_errors += t_e
         # oprank_ylist.append(sum_oprank_errors)
         # textrank_ylist.append(sum_textrank_errors)
-        oprank_ylist.append(sum_oprank_errors/max_sum)
-        textrank_ylist.append(sum_textrank_errors/max_sum)
+        oprank_ylist.append(sum_oprank_errors / max_sum)
+        textrank_ylist.append(sum_textrank_errors / max_sum)
 
         # log_oprank_ylist.append(math.log(max(op_e, 0.00000000001)))
         # log_textrank_ylist.append(math.log(max(t_e, 0.00000000001)))
@@ -211,20 +212,22 @@ def plot_rank_error_cdf():
     xmax, xmin = max(xlist), min(xlist)
     dx = (xmax - xmin) * 0.1
     fig = plt.figure('contrast fig')
-    sb1 = plt.subplot(2, 1, 1)
+    sb1 = plt.subplot(1, 1, 1)
     plt.xlim(0, xmax + dx)
-    plt.xlabel('total_reviews')
-    plt.ylabel('rank_errors(CDF)')
-    plt.title('CDF of Rank Error between OpinionRank and TextRank')
+    plt.xlabel('total_reviews',fontsize=16)
+    plt.ylabel('rank_errors(CDF)',fontsize=16)
+    plt.title('CDF of Rank Error between OpinionRank and TextRank',fontsize=18)
     plt.plot(xlist, oprank_ylist, label='oprank_errors', color='blue', linestyle="-")
     plt.plot(xlist, textrank_ylist, label='textrank_errors', color='green', linestyle="-")
-    plt.legend(loc='upper left')
+    plt.legend(loc='upper left', prop={'size': 18})
+    '''
     plt.subplot(2, 1, 2, sharex=sb1)
     plt.xlabel('total_reviews')
     plt.ylabel('rank_error reduction(%)')
     plt.title('Contrast of Rank Error Reduction between OpinionRank and TextRank')
     plt.bar(xlist, contrast_ylist, label='textrank_errors', color='green')
     plt.legend(loc='upper right')
+    '''
 
     plt.show()
 
