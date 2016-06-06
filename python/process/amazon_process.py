@@ -406,13 +406,13 @@ def calc_ndcg_values(ranked_list):
     DCG = 0.0
     for i in xrange(len(clf_rank)):
         item = clf_rank[i]
-        DCG += (2 ** item[2] - 1) / math.log(1 + i, 2)
+        DCG += (2 ** item[2] - 1) / math.log(2 + i, 2)
     # calc IDCG
     vote_rank = sorted(ranked_list, cmp=lambda x, y: -cmp(x[2], y[2]))
     IDCG = 0.0
     for i in xrange(len(vote_rank)):
         item = vote_rank[i]
-        IDCG += (2 ** item[2] - 1) / math.log(1 + i, 2)
+        IDCG += (2 ** item[2] - 1) / math.log(2 + i, 2)
     return DCG / IDCG
 
 
@@ -492,7 +492,7 @@ def train_models(train_start, train_end):
     print 'start lda training'
     tfidf = models.TfidfModel(train_token_list)
     corpus_tfidf = tfidf[train_token_list]
-    lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=50,
+    lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=100,
                                 passes=10)
     mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'w')
     pickle.dump(lda_model, mfile)
@@ -518,7 +518,7 @@ if __name__ == '__main__':
     # # mfile = open('nb_model.mod', 'w')
     # # pickle.dump(nbclf, mfile)
     #
-    train_models(0, 2000)
+    train_models(0, 3000)
 
     pass
     # mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
