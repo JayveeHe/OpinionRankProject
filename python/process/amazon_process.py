@@ -328,7 +328,7 @@ def cal_oprank_error(clf_res):
         item = value_rank[j]
         rank_dict[item[0]]['value_rank'] = j
         rank_item = rank_dict[item[0]]
-        errors += float(math.fabs(rank_item['clf_rank'] - rank_item['value_rank'])) / len(clf_res)
+        errors += float(math.fabs(rank_item['clf_rank'] - rank_item['value_rank']))/ len(clf_res)
     return errors, rank_dict
 
 

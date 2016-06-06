@@ -296,8 +296,8 @@ def cal_better_rate(category_name='AndroidAPP', a='oprank_errors', b='textrank_e
 if __name__ == '__main__':
     # count_vote_dist()
 
-    cal_better_rate(category_name="AndroidAPP", a='oprank_errors', b='lexical_errors')
+    # cal_better_rate(category_name="AndroidAPP", a='oprank_errors', b='lexical_errors')
     # count_vote_dist()
-    plot_rank_error_cdf(category_name="AndroidAPP")
+    # plot_rank_error_cdf(category_name="AndroidAPP")
     # plot_errors_curves()
-    # count_item_reviews_dist('VideoGames')
+    count_item_reviews_dist('Office')
