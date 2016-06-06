@@ -268,7 +268,7 @@ def amazon_preproc_by_asin(asin, rfclf, lda_model, lexical_rfclf, label_rate=0.6
     # manager = manager_groups[asin]
     nodelist = snm.node_list
     try:
-        oprank_res = classify_sent(nodelist, rfclf, lda_model)
+        # oprank_res = classify_sent(nodelist, rfclf, lda_model)
         lexical_res = classify_sent_lexical(nodelist, lexical_clf=lexical_rfclf, clf=rfclf, ldamod=lda_model)
         tmp_dict = {}
         for i in lexical_res:
@@ -283,17 +283,18 @@ def amazon_preproc_by_asin(asin, rfclf, lda_model, lexical_rfclf, label_rate=0.6
             item_rawlist.append(tmp_item)
             # raw_list.append(tmp_item)
 
-        oprank_errors, oprank_d = cal_oprank_error(lexical_res)
-        textrank_errors, textrank_d = cal_textrank_error(textrank_res)
-        lexical_errors, lexical_d = cal_lexical_error(lexical_res)
+        oprank_errors, oprank_d, oprank_ndcg = cal_oprank_error(lexical_res)
+        textrank_errors, textrank_d, textrank_ndcg = cal_textrank_error(textrank_res)
+        lexical_errors, lexical_d, lexical_ndcg = cal_lexical_error(lexical_res)
         # print info
         sum_oprank_errors += oprank_errors
         sum_lexical_errors += lexical_errors
         sum_textrank_errors += textrank_errors
         info = 'itemID: %s\ttotal reviews: %s\toprank_errors: %s\tlexical_errors: %s\ttextrank_errors: %s\t' \
-               'sum_oprank_errors: %s\tsum_lexical_errors: %s\tsum_textrank_errors: %s' % (
+               'sum_oprank_errors: %s\tsum_lexical_errors: %s\tsum_textrank_errors: %s\t' \
+               'oprank_ndcg: %s\ttextrank_ndcg: %s\tlexical_ndcg: %s' % (
                    asin, len(nodelist), oprank_errors, lexical_errors, textrank_errors, sum_oprank_errors,
-                   sum_lexical_errors, sum_textrank_errors)
+                   sum_lexical_errors, sum_textrank_errors, oprank_ndcg, textrank_ndcg, lexical_ndcg)
         # info_list.append(info)
         print info
         return info, item_rawlist
@@ -328,8 +329,9 @@ def cal_oprank_error(clf_res):
         item = value_rank[j]
         rank_dict[item[0]]['value_rank'] = j
         rank_item = rank_dict[item[0]]
-        errors += float(math.fabs(rank_item['clf_rank'] - rank_item['value_rank']))/ len(clf_res)
-    return errors, rank_dict
+        errors += float(math.fabs(rank_item['clf_rank'] - rank_item['value_rank'])) / len(clf_res)
+    nDCG = calc_ndcg_values(ranklist)
+    return errors, rank_dict, nDCG
 
 
 def cal_lexical_error(lexical_clf_res):
@@ -358,7 +360,8 @@ def cal_lexical_error(lexical_clf_res):
         rank_dict[item[0]]['value_rank'] = j
         rank_item = rank_dict[item[0]]
         errors += float(math.fabs(rank_item['lexical_clf_rank'] - rank_item['value_rank'])) / len(lexical_clf_res)
-    return errors, rank_dict
+    nDCG = calc_ndcg_values(ranklist)
+    return errors, rank_dict, nDCG
 
 
 def cal_textrank_error(sorted_sents):
@@ -383,9 +386,34 @@ def cal_textrank_error(sorted_sents):
         rank_dict[item[0]]['value_rank'] = j
         rank_item = rank_dict[item[0]]
         errors += float(math.fabs(rank_item['clf_rank'] - rank_item['value_rank'])) / len(sorted_sents)
-    return errors, rank_dict
+    nDCG = calc_ndcg_values(ranklist)
+    return errors, rank_dict, nDCG
 
     # rank_dict[review_id]=
+
+
+def calc_ndcg_values(ranked_list):
+    """
+    计算排序结果的Discounted cumulative gain (DCG)值
+    :param ranked_list: [(review_id, algo_value, rank_value)]
+    :return: NDCG值
+    """
+    # def map_vote_value(vote_value):
+    #     if 0<=vote_value<0.2:
+
+    clf_rank = sorted(ranked_list, cmp=lambda x, y: -cmp(x[1], y[1]))
+    # calc DCG
+    DCG = 0.0
+    for i in xrange(len(clf_rank)):
+        item = clf_rank[i]
+        DCG += (2 ** item[2] - 1) / math.log(1 + i, 2)
+    # calc IDCG
+    vote_rank = sorted(ranked_list, cmp=lambda x, y: -cmp(x[2], y[2]))
+    IDCG = 0.0
+    for i in xrange(len(vote_rank)):
+        item = vote_rank[i]
+        IDCG += (2 ** item[2] - 1) / math.log(1 + i, 2)
+    return DCG / IDCG
 
 
 def cal_trainset_count_errors(train_start, train_end, test_start, test_end, lda_model, rf_model):

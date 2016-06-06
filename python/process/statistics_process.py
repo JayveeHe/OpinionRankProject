@@ -177,11 +177,12 @@ def plot_rank_error_cdf(category_name='AndroidAPP'):
         if xdict.get(item['total_reviews']):
             xdict[item['total_reviews']]['oprank_errors'].append(item['oprank_errors'])
             xdict[item['total_reviews']]['textrank_errors'].append(item['textrank_errors'])
-            xdict[item['total_reviews']]['lexical_errors'].append(item['lexical_errors'])
+            xdict[item['total_reviews']]['lexical_errors'].append(item.get('lexical_errors',0))
         else:
             xdict[item['total_reviews']] = {'oprank_errors': [item['oprank_errors']],
                                             'textrank_errors': [item['textrank_errors']],
-                                            'lexical_errors': [item['lexical_errors']]}
+                                            'lexical_errors': [item.get('lexical_errors',0)]
+                                            }
         count += 1
         if item['total_reviews'] not in xlist:
             xlist.append(item['total_reviews'])
@@ -194,12 +195,12 @@ def plot_rank_error_cdf(category_name='AndroidAPP'):
     for x in xlist:
         op_e = numpy.mean(xdict[x]['oprank_errors'])
         t_e = numpy.mean(xdict[x]['textrank_errors'])
-        lex_e = numpy.mean(xdict[x]['lexical_errors'])
+        lex_e = numpy.mean(xdict[x].get('lexical_errors',0))
         max_sum += max(op_e, t_e, lex_e)
     for x in xlist:
         op_e = numpy.mean(xdict[x]['oprank_errors'])
         t_e = numpy.mean(xdict[x]['textrank_errors'])
-        lex_e = numpy.mean(xdict[x]['lexical_errors'])
+        lex_e = numpy.mean(xdict[x].get('lexical_errors',0))
         sum_oprank_errors += op_e
         sum_textrank_errors += t_e
         sum_lexical_rank_errors += lex_e
@@ -233,19 +234,19 @@ def plot_rank_error_cdf(category_name='AndroidAPP'):
     plt.show()
     # '''
     plt.subplot(1, 1, 1, sharex=sb1)
-    plt.xlabel('total_reviews')
-    plt.ylabel('rank_error reduction(%)')
-    plt.title('Contrast of Rank Error Reduction between OpinionRank and TextRank')
+    plt.xlabel('total_reviews', fontsize=16)
+    plt.ylabel('rank_error reduction(%)', fontsize=16)
+    plt.title('Contrast of Rank Error Reduction between OpinionRank and TextRank', fontsize=18)
     plt.bar(xlist, contrast_ylist, label='reduction_rate', color='green')
-    plt.legend(loc='upper right')
+    plt.legend(loc='upper right',prop={'size': 18})
     plt.show()
     # '''
     plt.subplot(1, 1, 1, sharex=sb1)
-    plt.xlabel('total_reviews')
-    plt.ylabel('rank_error reduction(%)')
-    plt.title('Contrast of Rank Error Reduction between Lexical-OpinionRank and TextRank')
+    plt.xlabel('total_reviews', fontsize=16)
+    plt.ylabel('rank_error reduction(%)', fontsize=16)
+    plt.title('Contrast of Rank Error Reduction between Lexical-OpinionRank and TextRank', fontsize=18)
     plt.bar(xlist, contrast_lex_ylist, label='reduction_rate', color='green')
-    plt.legend(loc='upper right')
+    plt.legend(loc='upper right',prop={'size': 18})
     plt.show()
 
 
@@ -295,9 +296,9 @@ def cal_better_rate(category_name='AndroidAPP', a='oprank_errors', b='textrank_e
 
 if __name__ == '__main__':
     # count_vote_dist()
-
-    # cal_better_rate(category_name="AndroidAPP", a='oprank_errors', b='lexical_errors')
+    category = 'AndroidAPP'
+    cal_better_rate(category_name=category, a='oprank_errors', b='textrank_errors')
     # count_vote_dist()
-    # plot_rank_error_cdf(category_name="AndroidAPP")
+    plot_rank_error_cdf(category_name=category)
     # plot_errors_curves()
-    count_item_reviews_dist('Office')
+    # count_item_reviews_dist('VideoGames')

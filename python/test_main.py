@@ -64,7 +64,7 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
     # save_label = 'amazon'
     print 'finding reviews records'
     meta_db_inst = get_db_inst('AmazonReviews', '%s_Meta' % category_name)
-    db_result = get_db_inst('AmazonReviews', '%s_result_new' % category_name)
+    db_result = get_db_inst('AmazonReviews', '%s_result_ndcg' % category_name)
     meta_result = meta_db_inst.find({"vote_reviews_count": {"$gte": low, "$lte": high}}, {"asin": 1})
     count = 0
     ttt = arrow.utcnow()
@@ -83,7 +83,8 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
         asin_list = asin_list[:limit]
     print 'start analyzing'
     for asin in asin_list:
-        info, raw_list = amazon_preproc_by_asin(asin, rfclf=rfclf, lda_model=lda_model, lexical_rfclf=lexical_rfclf,category_name=category_name)
+        info, raw_list = amazon_preproc_by_asin(asin, rfclf=rfclf, lda_model=lda_model, lexical_rfclf=lexical_rfclf,
+                                                category_name=category_name)
         if raw_list is None or info is None:
             continue
         for raw in raw_list:
@@ -97,16 +98,21 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
         sum_oprank_errors = eval(splits[5].replace('sum_oprank_errors: ', ''))
         sum_lexical_errors = eval(splits[6].replace('sum_lexical_errors: ', ''))
         sum_textrank_errors = eval(splits[7].replace('sum_textrank_errors: ', ''))
+        oprank_ndcg = eval(splits[8].replace('oprank_ndcg: ', ''))
+        textrank_ndcg = eval(splits[9].replace('textrank_ndcg: ', ''))
+        lexical_ndcg = eval(splits[10].replace('lexical_ndcg: ', ''))
         item = {'item_id': item_id, 'total_reviews': total_reviews, 'oprank_errors': oprank_errors,
                 'textrank_errors': textrank_errors, 'sum_oprank_errors': sum_oprank_errors,
-                'sum_textrank_errors': sum_textrank_errors}
+                'sum_textrank_errors': sum_textrank_errors, 'sum_lexical_errors': sum_lexical_errors,
+                'oprank_ndcg': oprank_ndcg, 'textrank_ndcg': textrank_ndcg, 'lexical_ndcg': lexical_ndcg}
         db_result.insert({'itemID': item['item_id'], 'total_reviews': item['total_reviews'],
                           'oprank_errors': item['oprank_errors'],
-                          'textrank_errors': item['textrank_errors'], 'lexical_errors': lexical_errors})
+                          'textrank_errors': item['textrank_errors'], 'lexical_errors': lexical_errors,
+                          'oprank_ndcg': oprank_ndcg, 'textrank_ndcg': textrank_ndcg, 'lexical_ndcg': lexical_ndcg})
         count += 1
     print 'handle %s docs' % count
 
 
 if __name__ == '__main__':
-    handle_amazon_by_review_range(500,1000, category_name='AndroidAPP', limit=50)
+    handle_amazon_by_review_range(500, 1000, category_name='AndroidAPP', limit=50)
     # handle_result_main()
