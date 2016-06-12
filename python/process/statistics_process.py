@@ -3,14 +3,13 @@ from collections import defaultdict
 import json
 import math
 import os
-import seaborn as sns
+# import seaborn as sns
 import sys
 
 projectpath = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 print projectpath
 sys.path.append(projectpath)
 import matplotlib.pyplot as plt
-from utils.CommonUtils import PROJECT_PATH
 from utils.dao_utils.mongo_utils import get_db_inst
 
 __author__ = 'jayvee'
@@ -177,11 +176,11 @@ def plot_rank_error_cdf(category_name='AndroidAPP'):
         if xdict.get(item['total_reviews']):
             xdict[item['total_reviews']]['oprank_errors'].append(item['oprank_errors'])
             xdict[item['total_reviews']]['textrank_errors'].append(item['textrank_errors'])
-            xdict[item['total_reviews']]['lexical_errors'].append(item.get('lexical_errors',0))
+            xdict[item['total_reviews']]['lexical_errors'].append(item.get('lexical_errors', 0))
         else:
             xdict[item['total_reviews']] = {'oprank_errors': [item['oprank_errors']],
                                             'textrank_errors': [item['textrank_errors']],
-                                            'lexical_errors': [item.get('lexical_errors',0)]
+                                            'lexical_errors': [item.get('lexical_errors', 0)]
                                             }
         count += 1
         if item['total_reviews'] not in xlist:
@@ -195,12 +194,12 @@ def plot_rank_error_cdf(category_name='AndroidAPP'):
     for x in xlist:
         op_e = numpy.mean(xdict[x]['oprank_errors'])
         t_e = numpy.mean(xdict[x]['textrank_errors'])
-        lex_e = numpy.mean(xdict[x].get('lexical_errors',0))
+        lex_e = numpy.mean(xdict[x].get('lexical_errors', 0))
         max_sum += max(op_e, t_e, lex_e)
     for x in xlist:
         op_e = numpy.mean(xdict[x]['oprank_errors'])
         t_e = numpy.mean(xdict[x]['textrank_errors'])
-        lex_e = numpy.mean(xdict[x].get('lexical_errors',0))
+        lex_e = numpy.mean(xdict[x].get('lexical_errors', 0))
         sum_oprank_errors += op_e
         sum_textrank_errors += t_e
         sum_lexical_rank_errors += lex_e
@@ -238,7 +237,7 @@ def plot_rank_error_cdf(category_name='AndroidAPP'):
     plt.ylabel('rank_error reduction(%)', fontsize=16)
     plt.title('Contrast of Rank Error Reduction between OpinionRank and TextRank', fontsize=18)
     plt.bar(xlist, contrast_ylist, label='reduction_rate', color='green')
-    plt.legend(loc='upper right',prop={'size': 18})
+    plt.legend(loc='upper right', prop={'size': 18})
     plt.show()
     # '''
     plt.subplot(1, 1, 1, sharex=sb1)
@@ -246,7 +245,105 @@ def plot_rank_error_cdf(category_name='AndroidAPP'):
     plt.ylabel('rank_error reduction(%)', fontsize=16)
     plt.title('Contrast of Rank Error Reduction between Lexical-OpinionRank and TextRank', fontsize=18)
     plt.bar(xlist, contrast_lex_ylist, label='reduction_rate', color='green')
-    plt.legend(loc='upper right',prop={'size': 18})
+    plt.legend(loc='upper right', prop={'size': 18})
+    plt.show()
+
+
+def plot_ndcg_cdf(category_name='AndroidAPP'):
+    """
+    绘制ndcgCDF的对比图
+    :return:
+    """
+    import pymongo
+    import numpy
+    db_result = get_db_inst('AmazonReviews', '%s_result_ndcg' % category_name)
+    find_result = db_result.find({"total_reviews": {"$gt": 0, '$lt': 2000}}).sort('total_reviews', pymongo.ASCENDING)
+    xlist = []
+    xdict = {}
+    oprank_ylist = []
+    textrank_ylist = []
+    lexical_rank_ylist = []
+    contrast_ylist = []
+    contrast_lex_ylist = []
+    log_oprank_ylist = []
+    log_textrank_ylist = []
+    count = 0
+    for item in find_result:
+        if xdict.get(item['total_reviews']):
+            xdict[item['total_reviews']]['oprank_ndcg'].append(item['oprank_ndcg'])
+            xdict[item['total_reviews']]['textrank_ndcg'].append(item['textrank_ndcg'])
+            xdict[item['total_reviews']]['lexical_ndcg'].append(item.get('lexical_ndcg', 0))
+        else:
+            xdict[item['total_reviews']] = {'oprank_ndcg': [item['oprank_ndcg']],
+                                            'textrank_ndcg': [item['textrank_ndcg']],
+                                            'lexical_ndcg': [item.get('lexical_ndcg', 0)]
+                                            }
+        count += 1
+        if item['total_reviews'] not in xlist:
+            xlist.append(item['total_reviews'])
+
+    sum_oprank_ndcg = 0.0
+    sum_textrank_ndcg = 0.0
+    sum_lexical_rank_ndcg = 0.0
+    max_sum = 0.0
+    print 'calc max sum'
+    for x in xlist:
+        op_e = numpy.mean(xdict[x]['oprank_ndcg'])
+        t_e = numpy.mean(xdict[x]['textrank_ndcg'])
+        lex_e = numpy.mean(xdict[x].get('lexical_ndcg', 0))
+        max_sum += max(op_e, t_e, lex_e)
+    for x in xlist:
+        op_e = numpy.mean(xdict[x]['oprank_ndcg'])
+        t_e = numpy.mean(xdict[x]['textrank_ndcg'])
+        lex_e = numpy.mean(xdict[x].get('lexical_ndcg', 0))
+        sum_oprank_ndcg += op_e
+        sum_textrank_ndcg += t_e
+        sum_lexical_rank_ndcg += lex_e
+        # oprank_ylist.append(sum_oprank_ndcg)
+        # textrank_ylist.append(sum_textrank_ndcg)
+        oprank_ylist.append(sum_oprank_ndcg / max_sum)
+        textrank_ylist.append(sum_textrank_ndcg / max_sum)
+        lexical_rank_ylist.append(sum_lexical_rank_ndcg / max_sum)
+        # log_oprank_ylist.append(math.log(max(op_e, 0.00000000001)))
+        # log_textrank_ylist.append(math.log(max(t_e, 0.00000000001)))
+        contrast_ylist.append(100 * (t_e - op_e) / max(t_e, 0.00000000001))
+        contrast_lex_ylist.append(100 * (t_e - lex_e) / max(t_e, 0.00000000001))
+
+    print count
+    print 'mean contrast: %s' % numpy.mean(contrast_ylist)
+    # plt.subplot(3, 1, 1)
+    # plt.plot(xlist, log_oprank_ylist, label='log_oprank_ndcg', color='blue', linestyle="-")
+    # plt.plot(xlist, log_textrank_ylist, label='log_textrank_ndcg', color='green', linestyle="-")
+    xmax, xmin = max(xlist), min(xlist)
+    dx = (xmax - xmin) * 0.1
+    fig = plt.figure('contrast fig')
+    sb1 = plt.subplot(1, 1, 1)
+    plt.xlim(0, xmax + dx)
+    fig.set_facecolor('white')
+    plt.grid(True)
+    plt.xlabel('total_reviews', fontsize=16)
+    plt.ylabel('rank_ndcg(CDF)', fontsize=16)
+    plt.title('CDF of nDCG between OpinionRank and TextRank', fontsize=18)
+    plt.plot(xlist, oprank_ylist, label='oprank_ndcg', color='blue', linestyle="-")
+    plt.plot(xlist, textrank_ylist, label='textrank_ndcg', color='green', linestyle="-")
+    plt.plot(xlist, lexical_rank_ylist, label='lexical_oprank_ndcg', color='red', linestyle="-")
+    plt.legend(loc='lower right', prop={'size': 18})
+    plt.show()
+    # '''
+    plt.subplot(1, 1, 1, sharex=sb1)
+    plt.xlabel('total_reviews', fontsize=16)
+    plt.ylabel('rank_error reduction(%)', fontsize=16)
+    plt.title('Contrast of Rank Error Reduction between OpinionRank and TextRank', fontsize=18)
+    plt.bar(xlist, contrast_ylist, label='reduction_rate', color='green')
+    plt.legend(loc='upper right', prop={'size': 18})
+    plt.show()
+    # '''
+    plt.subplot(1, 1, 1, sharex=sb1)
+    plt.xlabel('total_reviews', fontsize=16)
+    plt.ylabel('rank_error reduction(%)', fontsize=16)
+    plt.title('Contrast of Rank Error Reduction between Lexical-OpinionRank and TextRank', fontsize=18)
+    plt.bar(xlist, contrast_lex_ylist, label='reduction_rate', color='green')
+    plt.legend(loc='upper right', prop={'size': 18})
     plt.show()
 
 
@@ -283,7 +380,7 @@ def cal_better_rate(category_name='AndroidAPP', a='oprank_errors', b='textrank_e
     计算opinion rank比textrank好的情况占比
     :return:
     """
-    db_result = get_db_inst('AmazonReviews', '%s_result_new' % category_name)
+    db_result = get_db_inst('AmazonReviews', '%s_result_ndcg' % category_name)
     find_result = db_result.find({"total_reviews": {"$gt": 0, '$lt': 2000}})
     count = find_result.count()
     better_count = 0.0
@@ -297,8 +394,10 @@ def cal_better_rate(category_name='AndroidAPP', a='oprank_errors', b='textrank_e
 if __name__ == '__main__':
     # count_vote_dist()
     category = 'AndroidAPP'
-    cal_better_rate(category_name=category, a='oprank_errors', b='textrank_errors')
+    cal_better_rate(category_name=category, a='oprank_ndcg', b='lexical_ndcg')
     # count_vote_dist()
-    plot_rank_error_cdf(category_name=category)
+    # plot_rank_error_cdf(category_name=category)
+    plot_ndcg_cdf(category_name=category)
+
     # plot_errors_curves()
     # count_item_reviews_dist('VideoGames')

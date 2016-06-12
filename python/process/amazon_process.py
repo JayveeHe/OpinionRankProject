@@ -21,6 +21,23 @@ from utils.textrank_utils.text_rank_utils import text_en_nodelist
 __author__ = 'jayvee'
 
 
+def get_combined_vec(model_lda, tokens, level1_vecs):
+    """
+    返回lda和level1的组合vector
+    :param model_lda:
+    :param tokens:
+    :param level1_vecs:
+    :return:
+    """
+    lda_vec = get_lda_vec(model_lda, tokens)
+    combined_vec = []
+    for vi in xrange(len(level1_vecs)):
+        vec = level1_vecs[vi]
+        lvec = lda_vec[vi]
+        combined_vec.append(vec + lvec)
+    return combined_vec
+
+
 def get_lda_vec(model_lda, tokens):
     """
     根据已有的tokenlist获取lda vec
@@ -29,10 +46,15 @@ def get_lda_vec(model_lda, tokens):
     :return:
     """
     lda_vecs = []
-    for t in model_lda[tokens]:
+    tops = model_lda.get_document_topics(tokens, minimum_probability=0)
+    # for t in model_lda[tokens]:
+    for t in tops:
         t_vec = [0.0 for i in range(model_lda.num_topics)]
         for tt in t:
             t_vec[tt[0]] = tt[1]
+            t_id = tt[0]
+            t_prob = tt[1]
+            # t_info = model_lda.get_topic_terms(t_id, 1000)
         lda_vecs.append(t_vec)
     return lda_vecs
 
@@ -112,10 +134,12 @@ def classify_sent_lexical(sent_node_list, lexical_clf, clf, ldamod, labellist=No
     tokenlist = []
     for node in sent_node_list:
         tokenlist.append(node.feature2token())
-    lda_vecs = get_lda_vec(ldamod, tokenlist)
+    # lda_vecs = get_lda_vec(ldamod, tokenlist)
+    combined_vec = get_combined_vec(ldamod,tokenlist,lexical_vecs)
     res = []
     for i in xrange(len(lexical_vecs)):
-        vec = lda_vecs[i]
+        # vec = lda_vecs[i]
+        vec = combined_vec[i]
         vec = np.array(vec).reshape((1, -1))
         lexical_vec = lexical_vecs[i]
         lexical_vec = np.array(lexical_vec).reshape((1, -1))
@@ -492,20 +516,21 @@ def train_models(train_start, train_end):
     print 'start lda training'
     tfidf = models.TfidfModel(train_token_list)
     corpus_tfidf = tfidf[train_token_list]
-    lda_model = models.LdaModel(corpus_tfidf, num_topics=100, iterations=100,
+    lda_model = models.LdaModel(corpus_tfidf, num_topics=20, iterations=50,
                                 passes=10)
     mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'w')
     pickle.dump(lda_model, mfile)
-    print 'start training rf'
-    rfclf, rfcv = train_rf(get_lda_vec(lda_model, train_token_list), train_label_list)
-    print 'latent level rf cross-validation=%s' % rfcv
-    mfile = open('%s/process/models/rf_model.mod' % PROJECT_PATH, 'w')
-    pickle.dump(rfclf, mfile)
     print 'start training lexical rf'
     lexical_rfclf, lexical_cv = train_rf(train_veclist, train_label_list)
     print 'lexical rf cross-validation=%s' % lexical_cv
     mfile = open('%s/process/models/lexical_rf_model.mod' % PROJECT_PATH, 'w')
     pickle.dump(lexical_rfclf, mfile)
+    print 'start training rf'
+    combined_vec = get_combined_vec(lda_model, train_token_list, train_veclist)
+    rfclf, rfcv = train_rf(combined_vec, train_label_list)
+    print 'latent level rf cross-validation=%s' % rfcv
+    mfile = open('%s/process/models/rf_model.mod' % PROJECT_PATH, 'w')
+    pickle.dump(rfclf, mfile)
     print 'train done'
 
 
@@ -518,7 +543,7 @@ if __name__ == '__main__':
     # # mfile = open('nb_model.mod', 'w')
     # # pickle.dump(nbclf, mfile)
     #
-    train_models(0, 3000)
+    train_models(0, 2000)
 
     pass
     # mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
