@@ -256,7 +256,7 @@ def plot_ndcg_cdf(category_name='AndroidAPP'):
     """
     import pymongo
     import numpy
-    db_result = get_db_inst('AmazonReviews', '%s_result_ndcg' % category_name)
+    db_result = get_db_inst('AmazonReviews', '%s_result_ndcg_combined' % category_name)
     find_result = db_result.find({"total_reviews": {"$gt": 0, '$lt': 2000}}).sort('total_reviews', pymongo.ASCENDING)
     xlist = []
     xdict = {}
@@ -296,21 +296,24 @@ def plot_ndcg_cdf(category_name='AndroidAPP'):
         op_e = numpy.mean(xdict[x]['oprank_ndcg'])
         t_e = numpy.mean(xdict[x]['textrank_ndcg'])
         lex_e = numpy.mean(xdict[x].get('lexical_ndcg', 0))
-        sum_oprank_ndcg += op_e
-        sum_textrank_ndcg += t_e
-        sum_lexical_rank_ndcg += lex_e
+        sum_oprank_ndcg += math.sqrt(op_e)
+        sum_textrank_ndcg += math.sqrt(t_e)
+        sum_lexical_rank_ndcg += math.sqrt(lex_e)
         # oprank_ylist.append(sum_oprank_ndcg)
         # textrank_ylist.append(sum_textrank_ndcg)
+        max_sum=1
         oprank_ylist.append(sum_oprank_ndcg / max_sum)
         textrank_ylist.append(sum_textrank_ndcg / max_sum)
         lexical_rank_ylist.append(sum_lexical_rank_ndcg / max_sum)
         # log_oprank_ylist.append(math.log(max(op_e, 0.00000000001)))
         # log_textrank_ylist.append(math.log(max(t_e, 0.00000000001)))
-        contrast_ylist.append(100 * (t_e - op_e) / max(t_e, 0.00000000001))
-        contrast_lex_ylist.append(100 * (t_e - lex_e) / max(t_e, 0.00000000001))
+        # contrast_ylist.append(100 * (t_e - op_e) / max(t_e, 0.00000000001))
+        # contrast_lex_ylist.append(100 * (op_e - lex_e) / max(t_e, 0.00000000001))
+        contrast_ylist.append(100 * (t_e - op_e) / max(100, 0.00000000001))
+        contrast_lex_ylist.append(100 * (op_e - lex_e) / max(100, 0.00000000001))
 
     print count
-    print 'mean contrast: %s' % numpy.mean(contrast_ylist)
+    print 'mean contrast: %s' % numpy.mean(contrast_lex_ylist)
     # plt.subplot(3, 1, 1)
     # plt.plot(xlist, log_oprank_ylist, label='log_oprank_ndcg', color='blue', linestyle="-")
     # plt.plot(xlist, log_textrank_ylist, label='log_textrank_ndcg', color='green', linestyle="-")
@@ -380,7 +383,7 @@ def cal_better_rate(category_name='AndroidAPP', a='oprank_errors', b='textrank_e
     计算opinion rank比textrank好的情况占比
     :return:
     """
-    db_result = get_db_inst('AmazonReviews', '%s_result_ndcg' % category_name)
+    db_result = get_db_inst('AmazonReviews', '%s_result_ndcg_combined' % category_name)
     find_result = db_result.find({"total_reviews": {"$gt": 0, '$lt': 2000}})
     count = find_result.count()
     better_count = 0.0
@@ -393,7 +396,7 @@ def cal_better_rate(category_name='AndroidAPP', a='oprank_errors', b='textrank_e
 
 if __name__ == '__main__':
     # count_vote_dist()
-    category = 'AndroidAPP'
+    category = 'Office'
     cal_better_rate(category_name=category, a='oprank_ndcg', b='lexical_ndcg')
     # count_vote_dist()
     # plot_rank_error_cdf(category_name=category)

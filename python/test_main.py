@@ -114,6 +114,6 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
 
 
 if __name__ == '__main__':
-    handle_amazon_by_review_range(5, 50, category_name='AndroidAPP', limit=50)
+    handle_amazon_by_review_range(50, 100, category_name='Office', limit=50)
     # handle_amazon_by_review_range(20, 50, category_name='AndroidAPP', limit=50)
     # handle_result_main()

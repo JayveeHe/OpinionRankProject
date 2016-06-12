@@ -135,7 +135,7 @@ def classify_sent_lexical(sent_node_list, lexical_clf, clf, ldamod, labellist=No
     for node in sent_node_list:
         tokenlist.append(node.feature2token())
     # lda_vecs = get_lda_vec(ldamod, tokenlist)
-    combined_vec = get_combined_vec(ldamod,tokenlist,lexical_vecs)
+    combined_vec = get_combined_vec(ldamod, tokenlist, lexical_vecs)
     res = []
     for i in xrange(len(lexical_vecs)):
         # vec = lda_vecs[i]
@@ -424,19 +424,30 @@ def calc_ndcg_values(ranked_list):
     """
     # def map_vote_value(vote_value):
     #     if 0<=vote_value<0.2:
+    # calc IDCG
+    vote_rank = sorted(ranked_list, cmp=lambda x, y: -cmp(x[2], y[2]))
+    IDCG = 0.0
+    new_rank_with_index = []
+    mapping_weight = [5, 4, 3.8, 3.5, 3, 2.5, 2, 1.8, 1.5, 1.3,
+                      1.2, 1, 0.9, 0.7, 0.5, 0.3, 0.2, 0.1, 0.1, 0]
+    for i in xrange(len(vote_rank)):
+        item = vote_rank[i]
+        rank_index = i
+        mapping_rank = int(math.floor((float(rank_index) / len(vote_rank)) / 0.05))
+        # IDCG += (2 ** item[2] - 1) / math.log(2 + i, 2)
+        IDCG += (2 ** (mapping_weight[mapping_rank]/2.0) - 1) / math.log(2 + i, 2)
+        new_rank_with_index.append((item[0], item[1], item[2], i))
 
-    clf_rank = sorted(ranked_list, cmp=lambda x, y: -cmp(x[1], y[1]))
+    clf_rank = sorted(new_rank_with_index, cmp=lambda x, y: -cmp(x[1], y[1]))
     # calc DCG
     DCG = 0.0
     for i in xrange(len(clf_rank)):
         item = clf_rank[i]
-        DCG += (2 ** item[2] - 1) / math.log(2 + i, 2)
-    # calc IDCG
-    vote_rank = sorted(ranked_list, cmp=lambda x, y: -cmp(x[2], y[2]))
-    IDCG = 0.0
-    for i in xrange(len(vote_rank)):
-        item = vote_rank[i]
-        IDCG += (2 ** item[2] - 1) / math.log(2 + i, 2)
+        rank_index = item[3]
+        mapping_rank = int(math.floor((float(rank_index) / len(clf_rank)) / 0.05))
+        # DCG += (2 ** item[2] - 1) / math.log(2 + i, 2)
+        DCG += (2 ** (mapping_weight[mapping_rank]/2.0) - 1) / math.log(2 + i, 2)
+
     return DCG / IDCG
 
 
