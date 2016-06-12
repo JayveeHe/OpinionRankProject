@@ -192,6 +192,8 @@ def amazon_preprocess(start=0, end=10, label_rate=0.65, min_vote=0):
             a_reviews.append(find_item)
         # process item reviews VOTE RANK
         review_rank = []
+        if len(a_reviews)<10:
+            continue
         print '%s has %s reviews' % (asin, len(a_reviews))
         snm = SentenceNodeManager()
         for review in a_reviews:
