@@ -64,7 +64,7 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
     # save_label = 'amazon'
     print 'finding reviews records'
     meta_db_inst = get_db_inst('AmazonReviews', '%s_Meta' % category_name)
-    db_result = get_db_inst('AmazonReviews', '%s_result_ndcg' % category_name)
+    db_result = get_db_inst('AmazonReviews', '%s_result_ndcg_combined' % category_name)
     meta_result = meta_db_inst.find({"vote_reviews_count": {"$gte": low, "$lte": high}}, {"asin": 1})
     count = 0
     ttt = arrow.utcnow()
@@ -114,6 +114,6 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
 
 
 if __name__ == '__main__':
-    handle_amazon_by_review_range(50, 100, category_name='Office', limit=50)
+    handle_amazon_by_review_range(10, 500, category_name='Office', limit=100)
     # handle_amazon_by_review_range(20, 50, category_name='AndroidAPP', limit=50)
     # handle_result_main()
