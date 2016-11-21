@@ -3,6 +3,8 @@ import os
 import pickle
 from random import shuffle
 import math
+
+import numpy
 from gensim import models
 import numpy as np
 import sys
@@ -148,16 +150,16 @@ def classify_sent_lexical(sent_node_list, lexical_clf, clf, ldamod, labellist=No
         if labellist:
             res.append((
                 labellist[i], sent_node_list[i].sent, clf_result[1], sent_node_list[i].extra[1],
-                sent_node_list[i].extra[2], lexical_clf_result[1]))
+                sent_node_list[i].extra[2], lexical_clf_result[1], list(vec[0])))
         else:
             # clf_result = clf.predict_proba(vec)[0]
             res.append((
                 0 if clf_result[0] > 0.5 else 1, sent_node_list[i].sent, clf_result[1], sent_node_list[i].extra[1],
-                sent_node_list[i].extra[2], lexical_clf_result[1]))
+                sent_node_list[i].extra[2], lexical_clf_result[1], list(vec[0])))
     return res
 
 
-def amazon_preprocess(start=0, end=10, label_rate=0.65, min_vote=0):
+def amazon_preprocess(start=0, end=10, label_rate=0.2, min_vote=0):
     """
 
     :param start:
@@ -187,21 +189,49 @@ def amazon_preprocess(start=0, end=10, label_rate=0.65, min_vote=0):
         # 计算每个APP下的评论
         a_reviews = []
         max_vote = 0  # 常量
+        vote_list = []
         for find_item in db_inst.find({"asin": asin, 'total_vote': {"$gt": min_vote}}):
             max_vote = max(find_item['total_vote'], max_vote)
+            vote_list.append(find_item['total_vote'])
             a_reviews.append(find_item)
         # process item reviews VOTE RANK
         review_rank = []
-        if len(a_reviews)<10:
+
+        if len(a_reviews) < 10:
             continue
         print '%s has %s reviews' % (asin, len(a_reviews))
+        mean_vote = sum(vote_list) / len(vote_list)
         snm = SentenceNodeManager()
+        group_votevalues = []  # 统计群体评论的votevalue均值与标准差
         for review in a_reviews:
             alpha_const = 0
-            T = float(review['total_vote']) / max_vote
+            T = float(review['total_vote'] + 0.00001) / mean_vote
             V = 1 / (1.0 + math.exp(-0.01 * (2 * review['up_vote'] - review['total_vote'])))
             # V = float(review['up_vote']) / review['total_vote']
             vote_rank_value = 2 * (T + alpha_const) * (V + alpha_const) / (T + V + 2 * alpha_const)
+            group_votevalues.append(vote_rank_value)
+            # if vote_rank_value >= label_rate:
+            #     snm.add_node(
+            #         SentenceNode(review['reviewText'].lower(), extra=(int(1), vote_rank_value, review['reviewerID']),
+            #                      get_pos_func=tag_sents,
+            #                      get_keywords_func=cal_en_tfidf))
+            # elif vote_rank_value < label_rate:
+            #     snm.add_node(
+            #         SentenceNode(review['reviewText'].lower(), extra=(int(0), vote_rank_value, review['reviewerID']),
+            #                      get_pos_func=tag_sents,
+            #                      get_keywords_func=cal_en_tfidf))
+            # review_rank.append((review, vote_rank_value)) #进行排序
+        # 再一次重新统计votevalue
+        tmp_array = numpy.array(group_votevalues)
+        mean_votevalue = tmp_array.mean()
+        std_votevalue = tmp_array.std()
+        for review in a_reviews:
+            alpha_const = 0
+            T = float(review['total_vote'] + 0.00001) / mean_vote
+            V = 1 / (1.0 + math.exp(-0.01 * (2 * review['up_vote'] - review['total_vote'])))
+            # V = float(review['up_vote']) / review['total_vote']
+            vote_value = 2 * (T + alpha_const) * (V + alpha_const) / (T + V + 2 * alpha_const)
+            vote_rank_value = (vote_value - mean_votevalue) / std_votevalue
             if vote_rank_value >= label_rate:
                 snm.add_node(
                     SentenceNode(review['reviewText'].lower(), extra=(int(1), vote_rank_value, review['reviewerID']),
@@ -212,7 +242,8 @@ def amazon_preprocess(start=0, end=10, label_rate=0.65, min_vote=0):
                     SentenceNode(review['reviewText'].lower(), extra=(int(0), vote_rank_value, review['reviewerID']),
                                  get_pos_func=tag_sents,
                                  get_keywords_func=cal_en_tfidf))
-            review_rank.append((review, vote_rank_value))
+            review_rank.append((review, vote_rank_value))  # 进行排序
+
         manager_groups[asin] = snm
         review_dicts[asin] = review_rank
         # else:
@@ -243,7 +274,7 @@ def amazon_preprocess(start=0, end=10, label_rate=0.65, min_vote=0):
 
 
 @timer
-def amazon_preproc_by_asin(asin, rfclf, lda_model, lexical_rfclf, label_rate=0.65, category_name='AndroidAPP'):
+def amazon_preproc_by_asin(asin, rfclf, lda_model, lexical_rfclf, label_rate=0.1, category_name='AndroidAPP'):
     """
     根据asin直接分析某个商品下的评论
     :param asin:
@@ -255,19 +286,50 @@ def amazon_preproc_by_asin(asin, rfclf, lda_model, lexical_rfclf, label_rate=0.6
     db_inst = get_db_inst('AmazonReviews', category_name)  # 计算每个APP下的评论
     a_reviews = []
     max_vote = 0  # 常量
+    vote_list = []
     for find_item in db_inst.find({"asin": asin, 'total_vote': {"$gt": 0}}):
         max_vote = max(find_item['total_vote'], max_vote)
+        vote_list.append(find_item['total_vote'])
         a_reviews.append(find_item)
     # process item reviews VOTE RANK
     review_rank = []
+    if len(vote_list)<1:
+        return None,None
+    mean_vote = sum(vote_list) / len(vote_list)
     print '%s has %s reviews' % (asin, len(a_reviews))
     snm = SentenceNodeManager()
+
+    group_votevalues = []  # 统计群体评论的votevalue均值与标准差
+
     for review in a_reviews:
         alpha_const = 0
-        T = float(review['total_vote']) / max_vote
+        T = float(review['total_vote'] + 0.0001) / mean_vote
         V = 1 / (1.0 + math.exp(-0.01 * (2 * review['up_vote'] - review['total_vote'])))
         # V = float(review['up_vote']) / review['total_vote']
         vote_rank_value = 2 * (T + alpha_const) * (V + alpha_const) / (T + V + 2 * alpha_const)
+        group_votevalues.append(vote_rank_value)
+        # if vote_rank_value >= label_rate:
+        #     snm.add_node(
+        #         SentenceNode(review['reviewText'].lower(), extra=(int(1), vote_rank_value, review['reviewerID']),
+        #                      get_pos_func=tag_sents,
+        #                      get_keywords_func=cal_en_tfidf))
+        # elif vote_rank_value < label_rate:
+        #     snm.add_node(
+        #         SentenceNode(review['reviewText'].lower(), extra=(int(0), vote_rank_value, review['reviewerID']),
+        #                      get_pos_func=tag_sents,
+        #                      get_keywords_func=cal_en_tfidf))
+        # review_rank.append((review, vote_rank_value))
+    # 再一次重新统计votevalue
+    tmp_array = numpy.array(group_votevalues)
+    mean_votevalue = tmp_array.mean()
+    std_votevalue = tmp_array.std()
+    for review in a_reviews:
+        alpha_const = 0
+        T = float(review['total_vote'] + 0.00001) / mean_vote
+        V = 1 / (1.0 + math.exp(-0.01 * (2 * review['up_vote'] - review['total_vote'])))
+        # V = float(review['up_vote']) / review['total_vote']
+        vote_value = 2 * (T + alpha_const) * (V + alpha_const) / (T + V + 2 * alpha_const)
+        vote_rank_value = (vote_value - mean_votevalue) / std_votevalue
         if vote_rank_value >= label_rate:
             snm.add_node(
                 SentenceNode(review['reviewText'].lower(), extra=(int(1), vote_rank_value, review['reviewerID']),
@@ -278,7 +340,7 @@ def amazon_preproc_by_asin(asin, rfclf, lda_model, lexical_rfclf, label_rate=0.6
                 SentenceNode(review['reviewText'].lower(), extra=(int(0), vote_rank_value, review['reviewerID']),
                              get_pos_func=tag_sents,
                              get_keywords_func=cal_en_tfidf))
-            # review_rank.append((review, vote_rank_value))
+        review_rank.append((review, vote_rank_value))  # 进行排序
     manager_groups[asin] = snm
     # review_dicts[asin] = review_rank
     # nodelist = []
@@ -300,7 +362,7 @@ def amazon_preproc_by_asin(asin, rfclf, lda_model, lexical_rfclf, label_rate=0.6
         for i in lexical_res:
             tmp_dict[i[4]] = {'asin': asin, 'reviewerID': i[4], 'label': i[0], 'sent': i[1],
                               'opinion_rank_value': i[2],
-                              'vote_value': i[3], 'lexical_value': i[5]}
+                              'vote_value': i[3], 'lexical_value': i[5], 'combined_vec': i[6]}
             # raw_list.append('%s,%s,%s,%s,%s,%s' % (asin, i[4], i[0], i[1], i[2], i[3]))
         textrank_res = text_en_nodelist(nodelist)
         for i in textrank_res:
@@ -338,7 +400,7 @@ def cal_oprank_error(clf_res):
     """
     rank_dict = {}
     ranklist = []
-    for _, _, clf_value, rank_value, review_id, lexical_value in clf_res:
+    for _, _, clf_value, rank_value, review_id, lexical_value,_ in clf_res:
         # splits = rv_str.split(',')
         # clf_value = eval(splits[2])
         # rank_value = eval(splits[3])
@@ -368,7 +430,7 @@ def cal_lexical_error(lexical_clf_res):
     """
     rank_dict = {}
     ranklist = []
-    for _, _, clf_value, rank_value, review_id, lexical_value in lexical_clf_res:
+    for _, _, clf_value, rank_value, review_id, lexical_value,_ in lexical_clf_res:
         # splits = rv_str.split(',')
         # clf_value = eval(splits[2])
         # rank_value = eval(splits[3])
@@ -437,7 +499,7 @@ def calc_ndcg_values(ranked_list):
         rank_index = i
         mapping_rank = int(math.floor((float(rank_index) / len(vote_rank)) / 0.05))
         # IDCG += (2 ** item[2] - 1) / math.log(2 + i, 2)
-        IDCG += (2 ** (mapping_weight[mapping_rank]/2.0) - 1) / math.log(2 + i, 2)
+        IDCG += (2 ** (mapping_weight[mapping_rank] / 2.0) - 1) / math.log(2 + i, 2)
         new_rank_with_index.append((item[0], item[1], item[2], i))
 
     clf_rank = sorted(new_rank_with_index, cmp=lambda x, y: -cmp(x[1], y[1]))
@@ -448,7 +510,7 @@ def calc_ndcg_values(ranked_list):
         rank_index = item[3]
         mapping_rank = int(math.floor((float(rank_index) / len(clf_rank)) / 0.05))
         # DCG += (2 ** item[2] - 1) / math.log(2 + i, 2)
-        DCG += (2 ** (mapping_weight[mapping_rank]/2.0) - 1) / math.log(2 + i, 2)
+        DCG += (2 ** (mapping_weight[mapping_rank] / 2.0) - 1) / math.log(2 + i, 2)
 
     return DCG / IDCG
 

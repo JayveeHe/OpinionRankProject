@@ -82,6 +82,7 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
         limit = min(limit, len(asin_list))  # maybe not necessary
         asin_list = asin_list[:limit]
     print 'start analyzing'
+    db_vec_inst =get_db_inst('AmazonReviews', '%s_vector' % category_name)
     for asin in asin_list:
         info, raw_list = amazon_preproc_by_asin(asin, rfclf=rfclf, lda_model=lda_model, lexical_rfclf=lexical_rfclf,
                                                 category_name=category_name)
@@ -89,6 +90,7 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
             continue
         for raw in raw_list:
             csvout.write(json.dumps(raw) + '\n')
+        db_vec_inst.insert_many(raw_list)
         splits = info.split('\t')
         item_id = splits[0].replace('itemID: ', '')
         total_reviews = eval(splits[1].replace('total reviews: ', ''))
@@ -114,6 +116,6 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
 
 
 if __name__ == '__main__':
-    handle_amazon_by_review_range(10, 500, category_name='Office', limit=100)
+    handle_amazon_by_review_range(10, 50, category_name='AndroidAPP', limit=10)
     # handle_amazon_by_review_range(20, 50, category_name='AndroidAPP', limit=50)
     # handle_result_main()

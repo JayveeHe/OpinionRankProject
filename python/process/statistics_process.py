@@ -211,7 +211,7 @@ def plot_rank_error_cdf(category_name='AndroidAPP'):
         # log_oprank_ylist.append(math.log(max(op_e, 0.00000000001)))
         # log_textrank_ylist.append(math.log(max(t_e, 0.00000000001)))
         contrast_ylist.append(100 * (t_e - op_e) / max(t_e, 0.00000000001))
-        contrast_lex_ylist.append(100 * (t_e - lex_e) / max(t_e, 0.00000000001))
+        contrast_lex_ylist.append(100 * (op_e - lex_e) / max(op_e, 0.00000000001))
 
     print count
     print 'mean contrast: %s' % numpy.mean(contrast_ylist)
@@ -225,7 +225,7 @@ def plot_rank_error_cdf(category_name='AndroidAPP'):
     plt.xlim(0, xmax + dx)
     plt.xlabel('total_reviews', fontsize=16)
     plt.ylabel('rank_errors(CDF)', fontsize=16)
-    plt.title('CDF of Rank Error between OpinionRank and TextRank', fontsize=18)
+    plt.title('CDF for nDCG of OpinionRank, Lexical-Only and TextRank', fontsize=16)
     plt.plot(xlist, oprank_ylist, label='oprank_errors', color='blue', linestyle="-")
     plt.plot(xlist, textrank_ylist, label='textrank_errors', color='green', linestyle="-")
     plt.plot(xlist, lexical_rank_ylist, label='lexical_oprank_errors', color='red', linestyle="-")
@@ -235,16 +235,16 @@ def plot_rank_error_cdf(category_name='AndroidAPP'):
     plt.subplot(1, 1, 1, sharex=sb1)
     plt.xlabel('total_reviews', fontsize=16)
     plt.ylabel('rank_error reduction(%)', fontsize=16)
-    plt.title('Contrast of Rank Error Reduction between OpinionRank and TextRank', fontsize=18)
+    plt.title('OpinionRank\'s nDCG Improvement compared with  TextRank', fontsize=16)
     plt.bar(xlist, contrast_ylist, label='reduction_rate', color='green')
     plt.legend(loc='upper right', prop={'size': 18})
     plt.show()
     # '''
     plt.subplot(1, 1, 1, sharex=sb1)
     plt.xlabel('total_reviews', fontsize=16)
-    plt.ylabel('rank_error reduction(%)', fontsize=16)
-    plt.title('Contrast of Rank Error Reduction between Lexical-OpinionRank and TextRank', fontsize=18)
-    plt.bar(xlist, contrast_lex_ylist, label='reduction_rate', color='green')
+    plt.ylabel('nDCG improvement(%)', fontsize=16)
+    plt.title('OpinionRank\'s nDCG Improvement compared with Lexical-OpinionRank', fontsize=16)
+    plt.bar(xlist, contrast_lex_ylist, label='improvement rate', color='green')
     plt.legend(loc='upper right', prop={'size': 18})
     plt.show()
 
@@ -265,6 +265,11 @@ def plot_ndcg_cdf(category_name='AndroidAPP'):
     lexical_rank_ylist = []
     contrast_ylist = []
     contrast_lex_ylist = []
+
+    oplist = []
+    txlist = []
+    lexlist = []
+
     log_oprank_ylist = []
     log_textrank_ylist = []
     count = 0
@@ -286,22 +291,32 @@ def plot_ndcg_cdf(category_name='AndroidAPP'):
     sum_textrank_ndcg = 0.0
     sum_lexical_rank_ndcg = 0.0
     max_sum = 0.0
+    max_op = 0.0
+    max_tx = 0.0
+    max_le = 0.0
     print 'calc max sum'
     for x in xlist:
         op_e = numpy.mean(xdict[x]['oprank_ndcg'])
         t_e = numpy.mean(xdict[x]['textrank_ndcg'])
         lex_e = numpy.mean(xdict[x].get('lexical_ndcg', 0))
-        max_sum += max(op_e, t_e, lex_e)
+        # max_sum += max(op_e, t_e, lex_e)
+        max_sum += max(math.sqrt(op_e) * x ** 1, math.sqrt(t_e) * x ** 1, math.sqrt(lex_e) * x ** 1)
+        max_op += math.sqrt(op_e) * x ** 1
+        max_tx += math.sqrt(t_e) * x ** 1
+        max_le += math.sqrt(lex_e) * x ** 1
+        oplist.append(op_e)
+        txlist.append(t_e)
+        lexlist.append(lex_e)
     for x in xlist:
         op_e = numpy.mean(xdict[x]['oprank_ndcg'])
         t_e = numpy.mean(xdict[x]['textrank_ndcg'])
         lex_e = numpy.mean(xdict[x].get('lexical_ndcg', 0))
-        sum_oprank_ndcg += math.sqrt(op_e)
-        sum_textrank_ndcg += math.sqrt(t_e)
-        sum_lexical_rank_ndcg += math.sqrt(lex_e)
+        sum_oprank_ndcg += math.sqrt(op_e) * x ** 1
+        sum_textrank_ndcg += math.sqrt(t_e) * x ** 1
+        sum_lexical_rank_ndcg += math.sqrt(lex_e) * x ** 1
         # oprank_ylist.append(sum_oprank_ndcg)
         # textrank_ylist.append(sum_textrank_ndcg)
-        max_sum=1
+        # max_sum=1
         oprank_ylist.append(sum_oprank_ndcg / max_sum)
         textrank_ylist.append(sum_textrank_ndcg / max_sum)
         lexical_rank_ylist.append(sum_lexical_rank_ndcg / max_sum)
@@ -309,11 +324,17 @@ def plot_ndcg_cdf(category_name='AndroidAPP'):
         # log_textrank_ylist.append(math.log(max(t_e, 0.00000000001)))
         # contrast_ylist.append(100 * (t_e - op_e) / max(t_e, 0.00000000001))
         # contrast_lex_ylist.append(100 * (op_e - lex_e) / max(t_e, 0.00000000001))
-        contrast_ylist.append(100 * (t_e - op_e) / max(100, 0.00000000001))
-        contrast_lex_ylist.append(100 * (op_e - lex_e) / max(100, 0.00000000001))
+        contrast_ylist.append(100 * (op_e - t_e) / max(t_e, 0.00000000001))
+        contrast_lex_ylist.append(100 * (op_e - lex_e) / max(lex_e, 0.00000000001))
 
     print count
-    print 'mean contrast: %s' % numpy.mean(contrast_lex_ylist)
+    print 'mean op-text contrast: %s' % numpy.mean(contrast_ylist)
+    print 'mean op-lexical contrast: %s' % numpy.mean(contrast_lex_ylist)
+    print 'average oprank nDCG: %s' % numpy.mean(oplist)
+    print 'average textrank nDCG: %s' % numpy.mean(txlist)
+    print 'average lex nDCG: %s' % numpy.mean(lexlist)
+    print 'op better than tx: %s (%s/%s)' % (calc_better_ratio(oplist, txlist))
+    print 'op better than lex: %s (%s/%s)' % (calc_better_ratio(oplist, lexlist))
     # plt.subplot(3, 1, 1)
     # plt.plot(xlist, log_oprank_ylist, label='log_oprank_ndcg', color='blue', linestyle="-")
     # plt.plot(xlist, log_textrank_ylist, label='log_textrank_ndcg', color='green', linestyle="-")
@@ -334,18 +355,24 @@ def plot_ndcg_cdf(category_name='AndroidAPP'):
     plt.show()
     # '''
     plt.subplot(1, 1, 1, sharex=sb1)
+    fig = plt.figure('op-text')
+    fig.set_facecolor('white')
+    plt.grid(True)
     plt.xlabel('total_reviews', fontsize=16)
-    plt.ylabel('rank_error reduction(%)', fontsize=16)
-    plt.title('Contrast of Rank Error Reduction between OpinionRank and TextRank', fontsize=18)
-    plt.bar(xlist, contrast_ylist, label='reduction_rate', color='green')
+    plt.ylabel('nDCG improvement(%)', fontsize=16)
+    plt.title('The OpinionRank\'s nDCG Improvement compared with TextRank', fontsize=18)
+    plt.bar(xlist, contrast_ylist, label='improvement rate', color='green')
     plt.legend(loc='upper right', prop={'size': 18})
     plt.show()
     # '''
     plt.subplot(1, 1, 1, sharex=sb1)
+    fig = plt.figure('op-lex')
+    fig.set_facecolor('white')
+    plt.grid(True)
     plt.xlabel('total_reviews', fontsize=16)
-    plt.ylabel('rank_error reduction(%)', fontsize=16)
-    plt.title('Contrast of Rank Error Reduction between Lexical-OpinionRank and TextRank', fontsize=18)
-    plt.bar(xlist, contrast_lex_ylist, label='reduction_rate', color='green')
+    plt.ylabel('nDCG improvement(%)', fontsize=16)
+    plt.title('The OpinionRank\'s nDCG Improvement compared with Lexical-OpinionRank', fontsize=18)
+    plt.bar(xlist, contrast_lex_ylist, label='improvement rate', color='green')
     plt.legend(loc='upper right', prop={'size': 18})
     plt.show()
 
@@ -388,15 +415,24 @@ def cal_better_rate(category_name='AndroidAPP', a='oprank_errors', b='textrank_e
     count = find_result.count()
     better_count = 0.0
     for item in find_result:
-        if item[a] <= item[b]:
+        if item[a] >= item[b]:
             better_count += 1.0
     print 'better rate: %s (%s/%s)' % ((better_count / count), int(better_count), count)
     return better_count / count
 
 
+def calc_better_ratio(alist, blist):
+    count = len(alist)
+    better = 0
+    for i in range(len(alist)):
+        if alist[i] >= blist[i]:
+            better += 1.0
+    return better / count, int(better), count
+
+
 if __name__ == '__main__':
     # count_vote_dist()
-    category = 'Office'
+    category = 'AndroidAPP'
     cal_better_rate(category_name=category, a='oprank_ndcg', b='lexical_ndcg')
     # count_vote_dist()
     # plot_rank_error_cdf(category_name=category)
