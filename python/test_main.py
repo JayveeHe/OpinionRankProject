@@ -117,7 +117,7 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
                           'textrank_errors': item['textrank_errors'], 'lexical_errors': lexical_errors,
                           'regression_errors': regression_errors,
                           'oprank_ndcg': oprank_ndcg, 'textrank_ndcg': textrank_ndcg, 'lexical_ndcg': lexical_ndcg,
-                          'regression_ndcg': regression_ndcg,})
+                          'regression_ndcg': regression_ndcg})
         count += 1
     print 'handle %s docs' % count
 

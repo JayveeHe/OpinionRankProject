@@ -92,7 +92,7 @@ def train_gbrt(train_vec, train_label):
     trfclf = GBRT(n_estimators=501)
     train_vec = np.array(train_vec)
     trfclf.fit(train_vec, train_label)
-    cv_value = cross_val_score(trfclf, train_vec, train_label, cv=10, scoring='neg_mean_squared_error').mean()
+    cv_value = cross_val_score(trfclf, train_vec, train_label, cv=10, scoring='mean_squared_error').mean()
     # print cv_value
     # print rfclf.feature_importances_
     return trfclf, cv_value
@@ -161,7 +161,7 @@ def classify_sent_lexical(sent_node_list, lexical_clf, clf, gbrt_mod, ldamod, la
         lexical_vec = lexical_vecs[i]
         lexical_vec = np.array(lexical_vec).reshape((1, -1))
         clf_result = clf.predict_proba(vec)[0]
-        gbrt_result = gbrt_mod.predict(vec)
+        gbrt_result = gbrt_mod.predict(vec)[0]
         lexical_clf_result = lexical_clf.predict_proba(lexical_vec)[0]
         if labellist:
             res.append((
@@ -653,11 +653,11 @@ def train_models(train_start, train_end):
     mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
     lda_model = pickle.load(mfile)
 
-    print 'start training lexical rf'
-    lexical_rfclf, lexical_cv = train_rf(train_veclist, train_label_list)
-    print 'lexical rf cross-validation=%s' % lexical_cv
-    mfile = open('%s/process/models/lexical_rf_model.mod' % PROJECT_PATH, 'w')
-    pickle.dump(lexical_rfclf, mfile)
+    # print 'start training lexical rf'
+    # lexical_rfclf, lexical_cv = train_rf(train_veclist, train_label_list)
+    # print 'lexical rf cross-validation=%s' % lexical_cv
+    # mfile = open('%s/process/models/lexical_rf_model.mod' % PROJECT_PATH, 'w')
+    # pickle.dump(lexical_rfclf, mfile)
     print 'start training GBRT'
     combined_vec = get_combined_vec(lda_model, train_token_list, train_veclist)
     gbrtclf, gbrtcv = train_gbrt(combined_vec, regression_label_list)
@@ -676,7 +676,7 @@ if __name__ == '__main__':
     # # mfile = open('nb_model.mod', 'w')
     # # pickle.dump(nbclf, mfile)
     #
-    train_models(0, 2000)
+    train_models(0, 20)
 
     pass
     # mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
