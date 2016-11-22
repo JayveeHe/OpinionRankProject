@@ -430,6 +430,8 @@ def calc_better_ratio(alist, blist):
     return better / count, int(better), count
 
 
+# def generate_ndcg()
+
 if __name__ == '__main__':
     # count_vote_dist()
     category = 'AndroidAPP'

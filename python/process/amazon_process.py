@@ -18,7 +18,7 @@ from utils.dao_utils.mongo_utils import get_db_inst
 from utils.nltk_utils.nltk_tools import cal_en_tfidf, tag_sents
 from utils.node_vec_utils.global_utils import SentenceNodeManager
 from utils.node_vec_utils.vec_building_utils import SentenceNode
-from utils.textrank_utils.text_rank_utils import text_en_nodelist
+from utils.textrank_utils.text_rank_utils import text_en_nodelist, textrank_latentvec_nodelist
 
 __author__ = 'jayvee'
 
@@ -86,16 +86,24 @@ def train_rf(train_vec, train_label):
 def train_gbrt(train_vec, train_label):
     from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor as GBRT
     from sklearn.cross_validation import cross_val_score
+    from sklearn import grid_search
     # rfrclf = RFR(n_estimators=1001)
     # rfrclf.fit(train_vec, train_label)
     # print rfrclf.feature_importances_
-    trfclf = GBRT(n_estimators=501)
+
+    gbrt_mod = GBRT()
+    gbrt_parameters = {'n_estimators': [100, 150, 200, 250, 300, 350], 'max_depth': [2, 3, 4, 5],
+                       'max_leaf_nodes': [10, 20, 30]}
     train_vec = np.array(train_vec)
-    trfclf.fit(train_vec, train_label)
-    cv_value = cross_val_score(trfclf, train_vec, train_label, cv=10, scoring='mean_squared_error').mean()
+    gbrt_mod = grid_search.GridSearchCV(gbrt_mod, gbrt_parameters, n_jobs=20, scoring='mean_absolute_error')
+    gbrt_mod.fit(train_vec, train_label)
+
+    # trfclf = GBRT(n_estimators=501)
+    # trfclf.fit(train_vec, train_label)
+    cv_value = cross_val_score(gbrt_mod, train_vec, train_label, cv=10, scoring='mean_squared_error').mean()
     # print cv_value
     # print rfclf.feature_importances_
-    return trfclf, cv_value
+    return gbrt_mod, cv_value
 
 
 def train_lexical_classifier():
@@ -172,7 +180,7 @@ def classify_sent_lexical(sent_node_list, lexical_clf, clf, gbrt_mod, ldamod, la
             res.append((
                 0 if clf_result[0] > 0.5 else 1, sent_node_list[i].sent, clf_result[1], sent_node_list[i].extra[1],
                 sent_node_list[i].extra[2], lexical_clf_result[1], list(vec[0]), gbrt_result))
-    return res
+    return res, combined_vec
 
 
 def amazon_preprocess(start=0, end=10, label_rate=0.2, min_vote=0):
@@ -376,15 +384,17 @@ def amazon_preproc_by_asin(asin, rfclf, lda_model, lexical_rfclf, gbrtclf, label
     nodelist = snm.node_list
     try:
         # oprank_res = classify_sent(nodelist, rfclf, lda_model)
-        lexical_res = classify_sent_lexical(nodelist, lexical_clf=lexical_rfclf, clf=rfclf, gbrt_mod=gbrtclf,
-                                            ldamod=lda_model)
+        lexical_res, combined_vec = classify_sent_lexical(nodelist, lexical_clf=lexical_rfclf, clf=rfclf,
+                                                          gbrt_mod=gbrtclf,
+                                                          ldamod=lda_model)
         tmp_dict = {}
         for i in lexical_res:
             tmp_dict[i[4]] = {'asin': asin, 'reviewerID': i[4], 'label': i[0], 'sent': i[1],
                               'opinion_rank_value': i[2],
                               'vote_value': i[3], 'lexical_value': i[5], 'combined_vec': i[6], 'regression_value': i[7]}
             # raw_list.append('%s,%s,%s,%s,%s,%s' % (asin, i[4], i[0], i[1], i[2], i[3]))
-        textrank_res = text_en_nodelist(nodelist)
+        # textrank_res = text_en_nodelist(nodelist)
+        textrank_res = textrank_latentvec_nodelist(nodelist, combined_vec)
         for i in textrank_res:
             tmp_item = tmp_dict[i.review_id]
             tmp_item['text_rank_value'] = i.weight

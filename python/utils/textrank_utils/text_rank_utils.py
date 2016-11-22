@@ -37,7 +37,7 @@ def analyse_csv(csv_path, num=3, **pagerank_config):
     return tr4s.get_key_sentences(num=num, sentence_min_len=1)
 
 
-def text_rank(sentences, num=10, sim_func=get_similarity, pagerank_config={'alpha': 0.85, }):
+def text_rank(sentences, num=10, sim_func=get_similarity, pagerank_config={'alpha': 0.85,}):
     """将句子按照关键程度从大到小排序
 
     Keyword arguments:
@@ -93,7 +93,7 @@ def text_rank(sentences, num=10, sim_func=get_similarity, pagerank_config={'alph
     return sorted_sentences[:num]
 
 
-def text_en_nodelist(nodelist, sim_func=get_similarity, pagerank_config={'alpha': 0.85, }):
+def text_en_nodelist(nodelist, sim_func=get_similarity, pagerank_config={'alpha': 0.85,}):
     sentences = []
     words = []
     for node in nodelist:
@@ -107,6 +107,50 @@ def text_en_nodelist(nodelist, sim_func=get_similarity, pagerank_config={'alpha'
     for x in xrange(sentences_num):
         for y in xrange(x, sentences_num):
             similarity = sim_func(_source[x], _source[y])
+            graph[x, y] = similarity
+            graph[y, x] = similarity
+
+    nx_graph = nx.from_numpy_matrix(graph)
+    scores = nx.pagerank(nx_graph, **pagerank_config)  # this is a dict
+    sorted_scores = sorted(scores.items(), key=lambda item: item[1], reverse=True)
+
+    for index, score in sorted_scores:
+        review_id = nodelist[index].extra[2]
+        vote_value = nodelist[index].extra[1]
+        item = AttrDict(sentence=sentences[index], weight=score, review_id=review_id,
+                        vote_value=vote_value)
+        sorted_sentences.append(item)
+
+    return sorted_sentences
+
+
+def textrank_latentvec_nodelist(nodelist, vec_list, sim_func=get_similarity, pagerank_config={'alpha': 0.85,}):
+    def cal_cosine(vec1, vec2):
+        '''
+        计算两个向量之间的余弦相似度
+        :param vec1:
+        :param vec2:
+        :return:
+        '''
+        vec1 = np.float32(vec1)
+        vec2 = np.float32(vec2)
+        fenzi = np.sum(vec1 * vec2)
+        fenmu = np.linalg.norm(vec1, 2) * np.linalg.norm(vec2, 2)
+        return fenzi / fenmu if fenmu != 0 else 0
+
+    sentences = []
+    words = []
+    for node in nodelist:
+        sentences.append(node.sent)
+        words.append(nltk_tools.tokenize_sents(node.sent))
+    sorted_sentences = []
+    _source = vec_list
+    sentences_num = len(_source)
+    graph = np.zeros((sentences_num, sentences_num))
+
+    for x in xrange(sentences_num):
+        for y in xrange(x, sentences_num):
+            similarity = cal_cosine(_source[x], _source[y])
             graph[x, y] = similarity
             graph[y, x] = similarity
 
