@@ -92,8 +92,8 @@ def train_gbrt(train_vec, train_label):
     # print rfrclf.feature_importances_
 
     gbrt_mod = GBRT()
-    gbrt_parameters = {'n_estimators': [100, 150, 200, 250, 300, 350], 'max_depth': [2, 3, 4, 5],
-                       'max_leaf_nodes': [10, 20, 30]}
+    gbrt_parameters = {'n_estimators': [100,  200, 300], 'max_depth': [2, 3, 4, 5],
+                       'max_leaf_nodes': [10, 20]}
     train_vec = np.array(train_vec)
     gbrt_mod = grid_search.GridSearchCV(gbrt_mod, gbrt_parameters, n_jobs=20, scoring='mean_absolute_error')
     gbrt_mod.fit(train_vec, train_label)
@@ -686,7 +686,7 @@ if __name__ == '__main__':
     # # mfile = open('nb_model.mod', 'w')
     # # pickle.dump(nbclf, mfile)
     #
-    train_models(0, 20)
+    train_models(0, 2000)
 
     pass
     # mfile = open('%s/process/models/lda_model_100t.mod' % PROJECT_PATH, 'r')
