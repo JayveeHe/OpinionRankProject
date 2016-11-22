@@ -58,6 +58,8 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
     lda_model = pickle.load(mfile)
     mfile = open('%s/process/models/rf_model.mod' % PROJECT_PATH, 'r')
     rfclf = pickle.load(mfile)
+    mfile = open('%s/process/models/gbrt_model.mod' % PROJECT_PATH, 'r')
+    gbrtclf = pickle.load(mfile)
     mfile = open('%s/process/models/lexical_rf_model.mod' % PROJECT_PATH, 'r')
     lexical_rfclf = pickle.load(mfile)
     # ttt = arrow.utcnow()
@@ -82,9 +84,10 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
         limit = min(limit, len(asin_list))  # maybe not necessary
         asin_list = asin_list[:limit]
     print 'start analyzing'
-    db_vec_inst =get_db_inst('AmazonReviews', '%s_vector' % category_name)
+    db_vec_inst = get_db_inst('AmazonReviews', '%s_vector' % category_name)
     for asin in asin_list:
-        info, raw_list = amazon_preproc_by_asin(asin, rfclf=rfclf, lda_model=lda_model, lexical_rfclf=lexical_rfclf,
+        info, raw_list = amazon_preproc_by_asin(asin, rfclf=rfclf, lda_model=lda_model, gbrtclf=gbrtclf,
+                                                lexical_rfclf=lexical_rfclf,
                                                 category_name=category_name)
         if raw_list is None or info is None:
             continue
@@ -103,6 +106,8 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
         oprank_ndcg = eval(splits[8].replace('oprank_ndcg: ', ''))
         textrank_ndcg = eval(splits[9].replace('textrank_ndcg: ', ''))
         lexical_ndcg = eval(splits[10].replace('lexical_ndcg: ', ''))
+        regression_ndcg = eval(splits[11].replace('regression_ndcg: ', ''))
+        regression_errors = eval(splits[12].replace('regression_errors: ', ''))
         item = {'item_id': item_id, 'total_reviews': total_reviews, 'oprank_errors': oprank_errors,
                 'textrank_errors': textrank_errors, 'sum_oprank_errors': sum_oprank_errors,
                 'sum_textrank_errors': sum_textrank_errors, 'sum_lexical_errors': sum_lexical_errors,
@@ -110,7 +115,9 @@ def handle_amazon_by_review_range(low, high, limit=None, category_name='AndroidA
         db_result.insert({'itemID': item['item_id'], 'total_reviews': item['total_reviews'],
                           'oprank_errors': item['oprank_errors'],
                           'textrank_errors': item['textrank_errors'], 'lexical_errors': lexical_errors,
-                          'oprank_ndcg': oprank_ndcg, 'textrank_ndcg': textrank_ndcg, 'lexical_ndcg': lexical_ndcg})
+                          'regression_errors': regression_errors,
+                          'oprank_ndcg': oprank_ndcg, 'textrank_ndcg': textrank_ndcg, 'lexical_ndcg': lexical_ndcg,
+                          'regression_ndcg': regression_ndcg,})
         count += 1
     print 'handle %s docs' % count
 
