@@ -92,7 +92,7 @@ def train_gbrt(train_vec, train_label):
     trfclf = GBRT(n_estimators=501)
     train_vec = np.array(train_vec)
     trfclf.fit(train_vec, train_label)
-    cv_value = cross_val_score(trfclf, train_vec, train_label, cv=10, scoring='accuracy').mean()
+    cv_value = cross_val_score(trfclf, train_vec, train_label, cv=10, scoring='neg_mean_squared_error').mean()
     # print cv_value
     # print rfclf.feature_importances_
     return trfclf, cv_value
@@ -660,7 +660,7 @@ def train_models(train_start, train_end):
     pickle.dump(lexical_rfclf, mfile)
     print 'start training GBRT'
     combined_vec = get_combined_vec(lda_model, train_token_list, train_veclist)
-    gbrtclf, gbrtcv = train_rf(combined_vec, regression_label_list)
+    gbrtclf, gbrtcv = train_gbrt(combined_vec, regression_label_list)
     print 'latent level GBRT cross-validation=%s' % gbrtcv
     mfile = open('%s/process/models/gbrt_model.mod' % PROJECT_PATH, 'w')
     pickle.dump(gbrtclf, mfile)
